@@ -1,8 +1,8 @@
 import gsap from "gsap";
 import { Container } from "pixi.js";
+import SpritesheetAnimation from "../core/SpritesheetAnimation";
 import Keyboard from "../core/Keyboard";
 import { wait } from "../utils/misc";
-import SpritesheetAnimation from "../core/SpritesheetAnimation";
 
 enum Directions {
   LEFT = -1,
@@ -16,11 +16,13 @@ type AnimState = {
   speed?: number;
 };
 
+/**
+ * Example class showcasing the usage of the```Animation``` and ```Keyboard``` classes
+ */
 export class Player extends Container {
   private keyboard = Keyboard.getInstance();
   anim: SpritesheetAnimation;
   currentState: AnimState | null = null;
-  private initialized = false;
 
   static animStates: Record<string, AnimState> = {
     idle: {
@@ -78,7 +80,10 @@ export class Player extends Container {
     super();
 
     this.anim = new SpritesheetAnimation("wizard");
+
     this.addChild(this.anim);
+
+    this.setState(Player.animStates.idle);
 
     this.keyboard.onAction(({ action, buttonState }) => {
       if (buttonState === "pressed") this.onActionPress(action);
@@ -86,31 +91,13 @@ export class Player extends Container {
     });
   }
 
-  async init() {
-    if (this.initialized) return;
-
-    try {
-      await this.anim.init();
-      await this.setState(Player.animStates.idle);
-      this.initialized = true;
-    } catch (error) {
-      console.error("Failed to initialize Player:", error);
-    }
-  }
-
-  async setState(state: AnimState) {
-    if (!this.initialized || !this.anim.isReady) {
-      console.warn("Player not initialized, cannot set state");
-      return Promise.resolve();
-    }
-
+  setState(state: AnimState) {
     this.currentState = state;
+
     return this.anim.play(state);
   }
 
   private onActionPress(action: keyof typeof Keyboard.actions) {
-    if (!this.initialized) return;
-
     switch (action) {
       case "LEFT":
         this.move(Directions.LEFT);
@@ -131,8 +118,6 @@ export class Player extends Container {
   }
 
   onActionRelease(action: keyof typeof Keyboard.actions) {
-    if (!this.initialized) return;
-
     if (
       (action === "LEFT" && this.state.velocity.x < 0) ||
       (action === "RIGHT" && this.state.velocity.x > 0)
@@ -160,28 +145,28 @@ export class Player extends Container {
   }
 
   private updateAnimState() {
-    if (!this.initialized) return;
-
     const { walk, jump, dash, idle } = Player.animStates;
 
     if (this.dashing) {
       if (this.currentState === dash) return;
+
       this.setState(dash);
     } else if (this.jumping) {
       if (this.currentState === jump || this.currentState === dash) return;
+
       this.setState(jump);
     } else if (this.state.velocity.x !== 0) {
       if (this.currentState === walk) return;
+
       this.setState(walk);
     } else {
       if (this.currentState === idle) return;
+
       this.setState(idle);
     }
   }
 
   stopMovement() {
-    if (!this.initialized) return;
-
     this.decelerationTween?.progress(1);
 
     this.decelerationTween = gsap.to(this.state.velocity, {
@@ -195,7 +180,7 @@ export class Player extends Container {
   }
 
   async move(direction: Directions) {
-    if (!this.initialized || this.dashing) return;
+    if (this.dashing) return;
 
     this.decelerationTween?.progress(1);
 
@@ -210,7 +195,7 @@ export class Player extends Container {
   }
 
   async dash() {
-    if (!this.initialized || this.state.velocity.x === 0) return;
+    if (this.state.velocity.x === 0) return;
 
     this.dashing = true;
 
@@ -236,7 +221,7 @@ export class Player extends Container {
   }
 
   async jump() {
-    if (!this.initialized || this.jumping) return;
+    if (this.jumping) return;
 
     const { height, duration, ease } = this.config.jump;
 
@@ -252,9 +237,5 @@ export class Player extends Container {
     });
 
     this.jumping = false;
-  }
-
-  get isReady() {
-    return this.initialized;
   }
 }

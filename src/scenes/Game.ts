@@ -7,6 +7,7 @@ import { SceneUtils } from "../core/App";
 
 export default class Game extends Container {
   name = "Game";
+
   private player!: Player;
   private background!: ParallaxBackground;
 
@@ -15,15 +16,21 @@ export default class Game extends Container {
   }
 
   async load() {
+
     const bg = new Graphics().beginFill(0x0b1354).drawRect(0, 0, window.innerWidth, window.innerHeight)
+
     const text = new Text("Loading...", {
       fontFamily: "Verdana",
       fontSize: 50,
       fill: "white",
     });
+
     text.resolution = 2;
+
     centerObjects(text);
+
     this.addChild(bg, text);
+
     await this.utils.assetLoader.loadAssets();
   }
 
@@ -31,10 +38,7 @@ export default class Game extends Container {
     this.removeChildren();
 
     this.background = new ParallaxBackground(config.backgrounds.forest);
-    await this.background.init();
-
     this.player = new Player();
-    await this.player.init();
 
     this.player.x = window.innerWidth / 2;
     this.player.y = window.innerHeight - this.player.height / 3;
@@ -43,23 +47,15 @@ export default class Game extends Container {
   }
 
   update(delta: number) {
-    if (!this.player || !this.background) {
-      return;
-    }
-
     const x = this.player.state.velocity.x * delta;
     const y = this.player.state.velocity.y * delta;
     this.background.updatePosition(x, y);
   }
 
   onResize(width: number, height: number) {
-    if (this.player) {
-      this.player.x = width / 2;
-      this.player.y = height - this.player.height / 3;
-    }
+    this.player.x = width / 2;
+    this.player.y = height - this.player.height / 3;
 
-    if (this.background) {
-      this.background.resize(width, height);
-    }
+    this.background.resize(width, height);
   }
 }

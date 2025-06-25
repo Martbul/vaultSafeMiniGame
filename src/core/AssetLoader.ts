@@ -18,20 +18,19 @@ export default class AssetLoader {
   }
 
   importAssetFiles() {
-    const assetFiles = import.meta.glob("../assets/**/*.*", {
-      eager: true,
-    });
+    const assetFiles = import.meta.glob("/public/**/*.*");
 
     return Object.keys(assetFiles);
   }
+
   async loadAssets() {
     for (const asset of this.manifest) {
-      Assets.add({ alias: asset.name, src: asset.url });
+      Assets.add(asset.name, asset.url);
     }
 
     const resources = await Assets.load(this.manifest.map((asset) => asset.name));
 
-    Debug.log("Loaded assets", resources);
+    Debug.log("✅ Loaded assets", resources);
 
     return resources;
   }
@@ -52,6 +51,7 @@ export default class AssetLoader {
 
       const { category, name, ext } = match.groups;
 
+      // Skip image files in the spritesheets category
       if (category === "spritesheets" && ext !== "json") {
         return;
       }

@@ -1,7 +1,6 @@
+import { utils } from "pixi.js";
 
-import { EventEmitter } from '@pixi/utils';
-
-export default class Keyboard extends EventEmitter {
+export default class Keyboard extends utils.EventEmitter {
   private static instance: Keyboard;
 
   static states = {
