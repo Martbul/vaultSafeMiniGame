@@ -53,7 +53,6 @@ export default class AssetLoader {
 
       const { category, name, ext } = match.groups;
 
-      // Skip image files in the spritesheets category
       if (category === "spritesheets" && ext !== "json") {
         return;
       }

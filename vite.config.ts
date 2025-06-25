@@ -1,7 +1,18 @@
-import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  build: {
+    target: "esnext",
+    rollupOptions: {
+      external: /\.skel$/,
+    },
+  },
+  server: {
+    port: 3000,
+    host: true,
+  },
+  preview: {
+    host: true,
+    port: 8080,
+  },
 });
