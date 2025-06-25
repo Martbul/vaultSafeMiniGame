@@ -16,7 +16,7 @@ export default class ParallaxBackground extends Container {
     protected config: BgConfig = {
       panSpeed: 1,
       layers: [],
-    }
+    },
   ) {
     super();
 
@@ -33,7 +33,7 @@ export default class ParallaxBackground extends Container {
       const tilingSprite = new TilingSprite(
         texture,
         window.innerWidth / scaleFactor,
-        texture.height
+        texture.height,
       );
 
       tilingSprite.scale.set(scaleFactor);

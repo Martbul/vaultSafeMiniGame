@@ -33,7 +33,7 @@ export default class Keyboard extends utils.EventEmitter {
 
       return acc;
     },
-    {} as Record<string, keyof typeof Keyboard.actionKeyMap>
+    {} as Record<string, keyof typeof Keyboard.actionKeyMap>,
   );
 
   private keyMap = new Map<string, boolean>();
@@ -65,7 +65,7 @@ export default class Keyboard extends utils.EventEmitter {
     callback: (e: {
       action: keyof typeof Keyboard.actions;
       buttonState: "pressed" | "released";
-    }) => void
+    }) => void,
   ): void {
     this.on(Keyboard.states.ACTION, callback);
   }

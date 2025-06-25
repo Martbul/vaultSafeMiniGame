@@ -16,8 +16,9 @@ export default class Game extends Container {
   }
 
   async load() {
-
-    const bg = new Graphics().beginFill(0x0b1354).drawRect(0, 0, window.innerWidth, window.innerHeight)
+    const bg = new Graphics()
+      .beginFill(0x0b1354)
+      .drawRect(0, 0, window.innerWidth, window.innerHeight);
 
     const text = new Text("Loading...", {
       fontFamily: "Verdana",

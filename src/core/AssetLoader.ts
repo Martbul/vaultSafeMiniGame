@@ -28,7 +28,9 @@ export default class AssetLoader {
       Assets.add(asset.name, asset.url);
     }
 
-    const resources = await Assets.load(this.manifest.map((asset) => asset.name));
+    const resources = await Assets.load(
+      this.manifest.map((asset) => asset.name),
+    );
 
     Debug.log("✅ Loaded assets", resources);
 
@@ -45,7 +47,7 @@ export default class AssetLoader {
 
       if (!match || !match.groups) {
         return console.error(
-          `Invalid asset path: ${assetPath}, should match ${assetPathRegexp}`
+          `Invalid asset path: ${assetPath}, should match ${assetPathRegexp}`,
         );
       }
 

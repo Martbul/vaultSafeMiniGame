@@ -19,7 +19,7 @@ export function wait(seconds: number) {
 
 export async function after(
   seconds: number,
-  callback: (...args: unknown[]) => unknown
+  callback: (...args: unknown[]) => unknown,
 ) {
   await wait(seconds);
   return callback();

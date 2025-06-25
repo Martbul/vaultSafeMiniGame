@@ -7,7 +7,6 @@ export interface SceneUtils {
 }
 
 export default class App extends Application {
-
   private game: Game;
 
   constructor() {
