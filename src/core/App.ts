@@ -1,0 +1,44 @@
+import { Application } from "pixi.js";
+import AssetLoader from "./AssetLoader";
+import Game from "../scenes/Game";
+
+export interface SceneUtils {
+  assetLoader: AssetLoader;
+}
+
+export default class App {
+  private app: Application;
+  private game: Game;
+
+  constructor() {
+    this.app = new Application();
+
+    const sceneUtils = {
+      assetLoader: new AssetLoader(),
+    };
+    this.game = new Game(sceneUtils);
+  }
+
+  async begin() {
+    await this.app.init({
+      canvas: document.querySelector("#app") as HTMLCanvasElement,
+      autoDensity: true,
+      resizeTo: window,
+      powerPreference: "high-performance",
+      backgroundColor: 0x23272a,
+    });
+
+    this.app.stage.addChild(this.game);
+    await this.game.load();
+    await this.game.start();
+
+    window.addEventListener("resize", this.onResize.bind(this));
+
+    this.app.ticker.add((ticker) => this.game.update(ticker.deltaTime));
+  }
+
+  private onResize(ev: UIEvent) {
+    const target = ev.target as Window;
+    this.game.onResize?.(target.innerWidth, target.innerHeight);
+  }
+}

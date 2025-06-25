@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@pixi/react": "^8.0.0",
+    "@pixi/sound": "^6.0.1",
+    "@pixi/utils": "^7.4.3",
+    "gsap": "^3.13.0",
     "pixi.js": "^8.8.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
