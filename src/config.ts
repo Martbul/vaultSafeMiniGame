@@ -1,12 +1,7 @@
 export default {
   backgrounds: {
     vault: {
-      layers: [
-        "bg",
-        "door",
-        "handle",
-        "blink",
-      ],
+      layers: ["bg", "door", "handle", "blink"],
       panSpeed: 0.1,
     },
   },

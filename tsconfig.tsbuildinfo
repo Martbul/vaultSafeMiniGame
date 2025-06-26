@@ -1,0 +1,1 @@
+{"root":["./src/config.ts","./src/main.ts","./src/vite-env.d.ts","./src/core/App.ts","./src/core/AssetLoader.ts","./src/core/Keyboard.ts","./src/core/SpritesheetAnimation.ts","./src/scenes/Game.ts","./src/utils/Deferred.ts","./src/utils/debug.ts","./src/utils/misc.ts","./src/utils/types/global.d.ts","./src/utils/types/vite-env.d.ts"],"version":"5.7.3"}

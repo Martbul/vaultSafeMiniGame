@@ -3,21 +3,18 @@ import { centerObjects } from "../utils/misc";
 import { SceneUtils } from "../core/App";
 import gsap from "gsap";
 
-
 type RotatingDirection = "clockwise" | "counterclockwise";
 
 type Pair = {
-  value: number,
-  rotatingDirection: RotatingDirection,
-}
-
+  value: number;
+  rotatingDirection: RotatingDirection;
+};
 
 //TODO: Make the UI responsible based on divice
 //TODO: Fix prod
 //TODO: Add posthood tyo track wnners, loosers, needed trys
 //TODO: Delete comments
 //TODO: Clean up
-
 
 export default class Game extends Container {
   name = "Game";
@@ -37,8 +34,8 @@ export default class Game extends Container {
   private arrowRight!: Sprite;
   private arrowLeft!: Sprite;
   private isDoorOpen = false;
-  private currentHandleDeg = 0
-  private currentHandleSecretNumber = 0
+  private currentHandleDeg = 0;
+  private currentHandleSecretNumber = 0;
   private currentGuesses: Pair[] = [];
   private secretCombination!: Pair[];
 
@@ -67,7 +64,7 @@ export default class Game extends Container {
 
   async start() {
     const randomCombination = this.generateRandomCombination();
-    randomCombination.forEach((p: Pair) => console.log(p))
+    randomCombination.forEach((p: Pair) => console.log(p));
     this.secretCombination = randomCombination;
 
     this.removeChildren();
@@ -100,13 +97,11 @@ export default class Game extends Container {
     this.bgSprite = bgSprite;
     this.background.addChild(bgSprite);
 
-
-
     const vaultDoorTex = Texture.from("door");
     const tempDoor = new Sprite(vaultDoorTex);
     const doorScale = Math.min(
       (bgSprite.height * 0.61) / tempDoor.height,
-      (bgSprite.width * 0.43) / tempDoor.width
+      (bgSprite.width * 0.43) / tempDoor.width,
     );
 
     const doorPos = this.positionRelativeToBg(bgSprite, 0.68, 0.79);
@@ -116,8 +111,11 @@ export default class Game extends Container {
     this.vaultDoor.y = doorPos.y;
     this.vaultDoor.scale.set(doorScale);
 
-
-    const saveCurrentGuessContainerPos = this.positionRelativeToBg(bgSprite, 0.304, 0.492);
+    const saveCurrentGuessContainerPos = this.positionRelativeToBg(
+      bgSprite,
+      0.304,
+      0.492,
+    );
     this.saveCurrentGuessContainer.x = saveCurrentGuessContainerPos.x;
     this.saveCurrentGuessContainer.y = saveCurrentGuessContainerPos.y;
     this.saveCurrentGuessContainer.scale.set(doorScale);
@@ -134,7 +132,6 @@ export default class Game extends Container {
       this.saveCurrentGuess();
     });
     this.background.addChild(this.saveCurrentGuessContainer);
-
 
     const doorShadowPos = this.positionRelativeToBg(bgSprite, 0.867, 0.806);
     this.doorShadow = new Sprite(Texture.from("doorOpenShadow"));
@@ -191,7 +188,6 @@ export default class Game extends Container {
     this.arrowRight.scale.set(doorScale * 0.55);
     this.arrowRight.rotation = 105 * (Math.PI / 180);
 
-
     const arrowLeftPos = this.positionRelativeToBg(bgSprite, 0.41, 0.49);
     this.arrowLeft = new Sprite(Texture.from("rightrotatearrow"));
     this.arrowLeft.anchor.set(0.5);
@@ -212,18 +208,20 @@ export default class Game extends Container {
       this.arrowRight,
       this.arrowLeft,
     );
-
   }
 
-  private positionRelativeToBg(bg: Sprite, offsetX: number, offsetY: number): { x: number; y: number } {
+  private positionRelativeToBg(
+    bg: Sprite,
+    offsetX: number,
+    offsetY: number,
+  ): { x: number; y: number } {
     return {
       x: bg.x + (offsetX - 0.5) * bg.width,
-      y: bg.y + (offsetY - 0.5) * bg.height
+      y: bg.y + (offsetY - 0.5) * bg.height,
     };
   }
 
   private setupTextDisplays() {
-
     const instructionsTextStyle = new TextStyle({
       fontFamily: "Arial",
       fontSize: 24,
@@ -231,10 +229,13 @@ export default class Game extends Container {
       align: "left",
       wordWrap: true,
       wordWrapWidth: 300,
-      lineHeight: 30
+      lineHeight: 30,
     });
 
-    this.instructionsText = new Text("HOW TO PLAY:\n\n• Use arrows to rotate handle\n• Each number needs specific rotation direction\n• Click red button to save your guess\n• Find the 3-number combination\n• Open the vault to win!", instructionsTextStyle);
+    this.instructionsText = new Text(
+      "HOW TO PLAY:\n\n• Use arrows to rotate handle\n• Each number needs specific rotation direction\n• Click red button to save your guess\n• Find the 3-number combination\n• Open the vault to win!",
+      instructionsTextStyle,
+    );
     this.instructionsText.resolution = 2;
 
     const instructionsPos = this.positionRelativeToBg(this.bgSprite, 0.15, 0.5);
@@ -249,7 +250,7 @@ export default class Game extends Container {
       align: "left",
       wordWrap: true,
       wordWrapWidth: 280,
-      lineHeight: 28
+      lineHeight: 28,
     });
     this.guessesText = new Text("", guessesTextStyle);
     this.guessesText.resolution = 2;
@@ -295,7 +296,8 @@ export default class Game extends Container {
 
     const currentGuess: Pair = {
       value: Math.abs(this.currentHandleSecretNumber) % 10,
-      rotatingDirection: this.currentHandleDeg >= 0 ? "clockwise" : "counterclockwise"
+      rotatingDirection:
+        this.currentHandleDeg >= 0 ? "clockwise" : "counterclockwise",
     };
 
     this.currentGuesses.push(currentGuess);
@@ -311,8 +313,11 @@ export default class Game extends Container {
     let isCorrect = true;
 
     for (let i = 0; i < 3; i++) {
-      if (this.currentGuesses[i].value !== this.secretCombination[i].value ||
-        this.currentGuesses[i].rotatingDirection !== this.secretCombination[i].rotatingDirection) {
+      if (
+        this.currentGuesses[i].value !== this.secretCombination[i].value ||
+        this.currentGuesses[i].rotatingDirection !==
+        this.secretCombination[i].rotatingDirection
+      ) {
         isCorrect = false;
         break;
       }
@@ -348,9 +353,9 @@ export default class Game extends Container {
 
   private setupArrowInteraction() {
     this.arrowLeft.eventMode = "static";
-    this.arrowLeft.cursor = 'pointer';
+    this.arrowLeft.cursor = "pointer";
     this.arrowRight.eventMode = "static";
-    this.arrowRight.cursor = 'pointer';
+    this.arrowRight.cursor = "pointer";
 
     this.arrowRight.on("pointerdown", () => {
       this.currentHandleDeg += 60;
@@ -381,13 +386,12 @@ export default class Game extends Container {
       rotation: targetRadians,
       duration: 0.5,
       ease: "back.out(1.2)",
-
     });
 
     gsap.to(this.handleShadow, {
       rotation: targetRadians,
       duration: 0.5,
-      ease: "back.out(1.2)"
+      ease: "back.out(1.2)",
     });
   }
 
@@ -427,7 +431,6 @@ export default class Game extends Container {
     this.arrowLeft.visible = true;
   }
 
-
   onResize(width: number, height: number) {
     if (this.bgSprite) {
       const scaleX = width / this.bgSprite.texture.width;
@@ -440,34 +443,46 @@ export default class Game extends Container {
 
       const doorScale = Math.min(
         (this.bgSprite.height * 0.61) / this.vaultDoor.texture.height,
-        (this.bgSprite.width * 0.43) / this.vaultDoor.texture.width
+        (this.bgSprite.width * 0.43) / this.vaultDoor.texture.width,
       );
 
       if (this.vaultDoor) {
-        const doorPos = this.isDoorOpen ?
-          this.positionRelativeToBg(this.bgSprite, 0.845, 0.79) :
-          this.positionRelativeToBg(this.bgSprite, 0.68, 0.79);
+        const doorPos = this.isDoorOpen
+          ? this.positionRelativeToBg(this.bgSprite, 0.845, 0.79)
+          : this.positionRelativeToBg(this.bgSprite, 0.68, 0.79);
         this.vaultDoor.x = doorPos.x;
         this.vaultDoor.y = doorPos.y;
         this.vaultDoor.scale.set(doorScale);
       }
 
       if (this.doorShadow) {
-        const doorShadowPos = this.positionRelativeToBg(this.bgSprite, 0.867, 0.806);
+        const doorShadowPos = this.positionRelativeToBg(
+          this.bgSprite,
+          0.867,
+          0.806,
+        );
         this.doorShadow.x = doorShadowPos.x;
         this.doorShadow.y = doorShadowPos.y;
         this.doorShadow.scale.set(doorScale);
       }
 
       if (this.vaultHandle) {
-        const handlePos = this.positionRelativeToBg(this.bgSprite, 0.498, 0.484);
+        const handlePos = this.positionRelativeToBg(
+          this.bgSprite,
+          0.498,
+          0.484,
+        );
         this.vaultHandle.x = handlePos.x;
         this.vaultHandle.y = handlePos.y;
         this.vaultHandle.scale.set(doorScale);
       }
 
       if (this.handleShadow) {
-        const handleShadowPos = this.positionRelativeToBg(this.bgSprite, 0.5, 0.493);
+        const handleShadowPos = this.positionRelativeToBg(
+          this.bgSprite,
+          0.5,
+          0.493,
+        );
         this.handleShadow.x = handleShadowPos.x;
         this.handleShadow.y = handleShadowPos.y;
         this.handleShadow.scale.set(doorScale);
@@ -495,14 +510,22 @@ export default class Game extends Container {
       }
 
       if (this.arrowRight) {
-        const arrowRightPos = this.positionRelativeToBg(this.bgSprite, 0.583, 0.49);
+        const arrowRightPos = this.positionRelativeToBg(
+          this.bgSprite,
+          0.583,
+          0.49,
+        );
         this.arrowRight.x = arrowRightPos.x;
         this.arrowRight.y = arrowRightPos.y;
         this.arrowRight.scale.set(doorScale * 0.55);
       }
 
       if (this.arrowLeft) {
-        const arrowLeftPos = this.positionRelativeToBg(this.bgSprite, 0.41, 0.49);
+        const arrowLeftPos = this.positionRelativeToBg(
+          this.bgSprite,
+          0.41,
+          0.49,
+        );
         this.arrowLeft.x = arrowLeftPos.x;
         this.arrowLeft.y = arrowLeftPos.y;
         this.arrowLeft.scale.set(doorScale * 0.55);
@@ -510,20 +533,31 @@ export default class Game extends Container {
       }
 
       if (this.saveCurrentGuessContainer) {
-        const saveCurrentGuessContainerPos = this.positionRelativeToBg(this.bgSprite, 0.304, 0.492);
+        const saveCurrentGuessContainerPos = this.positionRelativeToBg(
+          this.bgSprite,
+          0.304,
+          0.492,
+        );
         this.saveCurrentGuessContainer.x = saveCurrentGuessContainerPos.x;
         this.saveCurrentGuessContainer.y = saveCurrentGuessContainerPos.y;
         this.saveCurrentGuessContainer.scale.set(doorScale);
       }
 
       if (this.instructionsText) {
-        const instructionsPos = this.positionRelativeToBg(this.bgSprite, 0.15, 0.5);
+        const instructionsPos = this.positionRelativeToBg(
+          this.bgSprite,
+          0.15,
+          0.5,
+        );
         this.instructionsText.x = instructionsPos.x;
         this.instructionsText.y = instructionsPos.y;
 
         const textScale = Math.min(width / 1920, height / 1080) * 1.2;
         this.instructionsText.style.fontSize = Math.max(16, 24 * textScale);
-        this.instructionsText.style.wordWrapWidth = Math.max(200, 300 * textScale);
+        this.instructionsText.style.wordWrapWidth = Math.max(
+          200,
+          300 * textScale,
+        );
       }
 
       if (this.guessesText) {
@@ -539,7 +573,7 @@ export default class Game extends Container {
   }
 
   private generateRandomCombination(): Pair[] {
-    let pairs: Pair[] = [];
+    const pairs: Pair[] = [];
 
     for (let i = 0; i < 3; i++) {
       const randomNumber = Math.floor(Math.random() * 9) + 1;
@@ -547,20 +581,19 @@ export default class Game extends Container {
       let rotatingDirection: RotatingDirection;
 
       if (oddOrEvenNum % 2 == 0) {
-        rotatingDirection = "clockwise"
+        rotatingDirection = "clockwise";
       } else {
-        rotatingDirection = "counterclockwise"
+        rotatingDirection = "counterclockwise";
       }
 
       const pair: Pair = {
         value: randomNumber,
-        rotatingDirection: rotatingDirection
-      }
+        rotatingDirection: rotatingDirection,
+      };
 
-      pairs.push(pair)
+      pairs.push(pair);
     }
 
     return pairs;
   }
-
 }

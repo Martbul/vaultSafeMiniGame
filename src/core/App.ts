@@ -33,7 +33,6 @@ export default class App extends Application {
     this.game.start();
 
     window.addEventListener("resize", this.onResize);
-
   }
 
   private onResize(ev: UIEvent) {
