@@ -358,7 +358,7 @@ export default class Game extends Container {
       if (
         this.currentGuesses[i].value !== this.secretCombination[i].value ||
         this.currentGuesses[i].rotatingDirection !==
-        this.secretCombination[i].rotatingDirection
+          this.secretCombination[i].rotatingDirection
       ) {
         isCorrect = false;
         break;
