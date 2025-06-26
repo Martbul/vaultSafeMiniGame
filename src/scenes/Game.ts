@@ -11,11 +11,10 @@ type Pair = {
 };
 
 //TODO: Make the UI responsible based on divice
-//TODO: Fix prod
 //TODO: Add posthood tyo track wnners, loosers, needed trys
-//TODO: Delete comments
-//TODO: Clean up
-
+//Add souds on wriong guess, on success, on rortation, on clickin gthe red button, on gold shine
+//USse promises
+////Read the document once again
 export default class Game extends Container {
   name = "Game";
 
@@ -129,6 +128,7 @@ export default class Game extends Container {
     this.saveCurrentGuessContainer.addChild(redBackground);
     this.saveCurrentGuessContainer.interactive = true;
     this.saveCurrentGuessContainer.on("pointerdown", () => {
+      this.playClickngSound();
       this.saveCurrentGuess();
     });
     this.background.addChild(this.saveCurrentGuessContainer);
@@ -180,7 +180,7 @@ export default class Game extends Container {
     this.vaultBlink3.scale.set(doorScale * 0.5);
     this.vaultBlink3.visible = false;
 
-    const arrowRightPos = this.positionRelativeToBg(bgSprite, 0.583, 0.49);
+    const arrowRightPos = this.positionRelativeToBg(bgSprite, 0.583, 0.482);
     this.arrowRight = new Sprite(Texture.from("rightrotatearrow"));
     this.arrowRight.anchor.set(0.5);
     this.arrowRight.x = arrowRightPos.x;
@@ -223,17 +223,24 @@ export default class Game extends Container {
 
   private setupTextDisplays() {
     const instructionsTextStyle = new TextStyle({
-      fontFamily: "Arial",
       fontSize: 24,
-      fill: "#ffffff",
+      fill: ["ffffff"],
       align: "left",
       wordWrap: true,
-      wordWrapWidth: 300,
-      lineHeight: 30,
+      wordWrapWidth: 340,
+      lineHeight: 32,
+      dropShadow: true,
+      dropShadowColor: "#000000",
+      dropShadowBlur: 8,
+      dropShadowAngle: Math.PI / 4,
+      dropShadowDistance: 6,
+      stroke: "#003300",
+      strokeThickness: 4,
+      letterSpacing: 1,
     });
 
     this.instructionsText = new Text(
-      "HOW TO PLAY:\n\n• Use arrows to rotate handle\n• Each number needs specific rotation direction\n• Click red button to save your guess\n• Find the 3-number combination\n• Open the vault to win!",
+      "HOW TO PLAY:\n\n• Find the 3 number and rotation combination\n• Click on the buttons on the left on the door to save your guess",
       instructionsTextStyle,
     );
     this.instructionsText.resolution = 2;
@@ -244,13 +251,21 @@ export default class Game extends Container {
     this.instructionsText.anchor.set(0.5);
 
     const guessesTextStyle = new TextStyle({
-      fontFamily: "Arial",
-      fontSize: 22,
-      fill: "#00ff00",
+      fontFamily: "Impact",
+      fontSize: 34,
+      fill: ["ffffff"],
       align: "left",
       wordWrap: true,
-      wordWrapWidth: 280,
-      lineHeight: 28,
+      wordWrapWidth: 340,
+      lineHeight: 42,
+      dropShadow: true,
+      dropShadowColor: "#000000",
+      dropShadowBlur: 8,
+      dropShadowAngle: Math.PI / 4,
+      dropShadowDistance: 6,
+      stroke: "#003300",
+      strokeThickness: 4,
+      letterSpacing: 1,
     });
     this.guessesText = new Text("", guessesTextStyle);
     this.guessesText.resolution = 2;
@@ -264,26 +279,9 @@ export default class Game extends Container {
   }
 
   private updateGuessesDisplay() {
-    let displayText = "CURRENT STATE:\n\n";
+    let displayText = "";
 
-    if (this.currentGuesses.length === 0) {
-      displayText += "No guesses yet...\n\n";
-    } else {
-      displayText += "Your Guesses:\n";
-      this.currentGuesses.forEach((guess, index) => {
-        const direction = guess.rotatingDirection === "clockwise" ? "→" : "←";
-        displayText += `${index + 1}. ${guess.value} ${direction}\n`;
-      });
-      displayText += "\n";
-    }
-
-    displayText += `Current Handle:\nNumber: ${Math.abs(this.currentHandleSecretNumber) % 10}\nRotation: ${this.currentHandleDeg}°`;
-
-    if (this.currentGuesses.length < 3) {
-      displayText += `\n\nNeed ${3 - this.currentGuesses.length} more guess(es)`;
-    } else {
-      displayText += "\n\nReady to check combination!";
-    }
+    displayText += `\n${3 - this.currentGuesses.length} MORE ROTATIONS`;
 
     this.guessesText.text = displayText;
   }
@@ -316,7 +314,7 @@ export default class Game extends Container {
       if (
         this.currentGuesses[i].value !== this.secretCombination[i].value ||
         this.currentGuesses[i].rotatingDirection !==
-        this.secretCombination[i].rotatingDirection
+          this.secretCombination[i].rotatingDirection
       ) {
         isCorrect = false;
         break;
@@ -325,19 +323,18 @@ export default class Game extends Container {
 
     if (isCorrect) {
       this.openDoor();
-      this.guessesText.text = "SUCCESS!\n\nVault Opened!\n\nCongratulations!";
-      this.guessesText.style.fill = "#ffff00";
+      this.guessesText.visible = false;
     } else {
+      this.playLockedSound();
       this.currentGuesses = [];
       this.resetHandle();
       this.updateGuessesDisplay();
 
-      //const originalText = this.guessesText.text;
       this.guessesText.text = "WRONG COMBINATION!\n\nTry again...";
       this.guessesText.style.fill = "#ff0000";
 
       setTimeout(() => {
-        this.guessesText.style.fill = "#00ff00";
+        this.guessesText.style.fill = "#ffffff";
         this.updateGuessesDisplay();
       }, 2000);
     }
@@ -361,12 +358,16 @@ export default class Game extends Container {
       this.currentHandleDeg += 60;
       this.currentHandleSecretNumber += 1;
 
+      this.playHandleRotatingSound();
+
       this.animateHandleRotation(this.currentHandleDeg);
     });
 
     this.arrowLeft.on("pointerdown", () => {
       this.currentHandleDeg -= 60;
       this.currentHandleSecretNumber -= 1;
+
+      this.playHandleRotatingSound();
 
       this.animateHandleRotation(this.currentHandleDeg);
     });
@@ -411,6 +412,8 @@ export default class Game extends Container {
     this.vaultBlink3.visible = true;
     this.arrowLeft.visible = false;
     this.arrowRight.visible = false;
+
+    this.playDoorOpenSound();
   }
 
   private closeDoor() {
@@ -580,7 +583,7 @@ export default class Game extends Container {
       const oddOrEvenNum = Math.random();
       let rotatingDirection: RotatingDirection;
 
-      if (oddOrEvenNum % 2 == 0) {
+      if (oddOrEvenNum < 0.5) {
         rotatingDirection = "clockwise";
       } else {
         rotatingDirection = "counterclockwise";
@@ -595,5 +598,33 @@ export default class Game extends Container {
     }
 
     return pairs;
+  }
+
+  private playDoorOpenSound() {
+    const audio = new Audio("../../public/sounds/shine.mp3");
+    audio.play().catch((e) => {
+      console.warn("Audio play failed:", e);
+    });
+  }
+
+  private playHandleRotatingSound() {
+    const audio = new Audio("../../public/sounds/doorSwing.mp3");
+    audio.play().catch((e) => {
+      console.warn("Audio play failed:", e);
+    });
+  }
+
+  private playClickngSound() {
+    const audio = new Audio("../../public/sounds/click.mp3");
+    audio.play().catch((e) => {
+      console.warn("Audio play failed:", e);
+    });
+  }
+
+  private playLockedSound() {
+    const audio = new Audio("../../public/sounds/locked.mp3");
+    audio.play().catch((e) => {
+      console.warn("Audio play failed:", e);
+    });
   }
 }
