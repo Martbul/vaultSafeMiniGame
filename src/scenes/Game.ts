@@ -314,7 +314,7 @@ export default class Game extends Container {
       if (
         this.currentGuesses[i].value !== this.secretCombination[i].value ||
         this.currentGuesses[i].rotatingDirection !==
-          this.secretCombination[i].rotatingDirection
+        this.secretCombination[i].rotatingDirection
       ) {
         isCorrect = false;
         break;
@@ -601,28 +601,28 @@ export default class Game extends Container {
   }
 
   private playDoorOpenSound() {
-    const audio = new Audio("../../public/sounds/shine.mp3");
+    const audio = new Audio("/sounds/shine.mp3");
     audio.play().catch((e) => {
       console.warn("Audio play failed:", e);
     });
   }
 
   private playHandleRotatingSound() {
-    const audio = new Audio("../../public/sounds/doorSwing.mp3");
+    const audio = new Audio("/sounds/doorSwing.mp3");
     audio.play().catch((e) => {
       console.warn("Audio play failed:", e);
     });
   }
 
   private playClickngSound() {
-    const audio = new Audio("../../public/sounds/click.mp3");
+    const audio = new Audio("/sounds/click.mp3");
     audio.play().catch((e) => {
       console.warn("Audio play failed:", e);
     });
   }
 
   private playLockedSound() {
-    const audio = new Audio("../../public/sounds/locked.mp3");
+    const audio = new Audio("/sounds/locked.mp3");
     audio.play().catch((e) => {
       console.warn("Audio play failed:", e);
     });
