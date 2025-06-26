@@ -12,7 +12,8 @@
   "dependencies": {
     "@pixi/sound": "^5.2.3",
     "gsap": "^3.13.0",
-    "pixi.js": "^7.4.3"
+    "pixi.js": "^7.4.3",
+    "vite": "^7.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

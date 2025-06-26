@@ -1,4 +1,12 @@
-import { Container, Text, Graphics, Sprite, Texture, TextStyle } from "pixi.js";
+import {
+  Container,
+  Text,
+  Graphics,
+  Sprite,
+  Texture,
+  TextStyle,
+  Rectangle,
+} from "pixi.js";
 import { centerObjects } from "../utils/misc";
 import { SceneUtils } from "../core/App";
 import gsap from "gsap";
@@ -119,13 +127,14 @@ export default class Game extends Container {
     this.saveCurrentGuessContainer.y = saveCurrentGuessContainerPos.y;
     this.saveCurrentGuessContainer.scale.set(doorScale);
 
-    const redBackground = new Graphics();
     const width = 270;
     const height = 420;
-    redBackground.beginFill(0xff0000);
-    redBackground.drawRect(-width / 2, -height / 2, width, height);
-    redBackground.endFill();
-    this.saveCurrentGuessContainer.addChild(redBackground);
+    this.saveCurrentGuessContainer.hitArea = new Rectangle(
+      -width / 2,
+      -height / 2,
+      width,
+      height,
+    );
     this.saveCurrentGuessContainer.interactive = true;
     this.saveCurrentGuessContainer.on("pointerdown", () => {
       this.playClickngSound();
@@ -187,6 +196,23 @@ export default class Game extends Container {
     this.arrowRight.y = arrowRightPos.y;
     this.arrowRight.scale.set(doorScale * 0.55);
     this.arrowRight.rotation = 105 * (Math.PI / 180);
+    this.arrowRight.on("pointerover", () => {
+      gsap.to(this.arrowRight.scale, {
+        x: doorScale * 0.65,
+        y: doorScale * 0.65,
+        duration: 0.2,
+        ease: "power2.out",
+      });
+    });
+
+    this.arrowRight.on("pointerout", () => {
+      gsap.to(this.arrowRight.scale, {
+        x: doorScale * 0.55,
+        y: doorScale * 0.55,
+        duration: 0.2,
+        ease: "power2.out",
+      });
+    });
 
     const arrowLeftPos = this.positionRelativeToBg(bgSprite, 0.41, 0.49);
     this.arrowLeft = new Sprite(Texture.from("rightrotatearrow"));
@@ -196,6 +222,24 @@ export default class Game extends Container {
     this.arrowLeft.scale.set(doorScale * 0.55);
     this.arrowLeft.scale.x *= -1;
     this.arrowLeft.rotation = 240 * (Math.PI / 180);
+    this.arrowLeft.on("pointerover", () => {
+      gsap.to(this.arrowLeft.scale, {
+        x: -(doorScale * 0.65),
+
+        y: doorScale * 0.65,
+        duration: 0.2,
+        ease: "power2.out",
+      });
+    });
+
+    this.arrowLeft.on("pointerout", () => {
+      gsap.to(this.arrowLeft.scale, {
+        x: -(doorScale * 0.55),
+        y: doorScale * 0.55,
+        duration: 0.2,
+        ease: "power2.out",
+      });
+    });
 
     this.background.addChild(
       this.doorShadow,
@@ -240,7 +284,7 @@ export default class Game extends Container {
     });
 
     this.instructionsText = new Text(
-      "HOW TO PLAY:\n\n• Find the 3 number and rotation combination\n• Click on the buttons on the left on the door to save your guess",
+      "HOW TO PLAY:\n\n• Find the 3 number and rotation combination\n• Click on the keypad to save your guess",
       instructionsTextStyle,
     );
     this.instructionsText.resolution = 2;
@@ -324,14 +368,44 @@ export default class Game extends Container {
     if (isCorrect) {
       this.openDoor();
       this.guessesText.visible = false;
+
+      new Promise((resolve) => setTimeout(resolve, 5000)).then(() => {
+        this.closeDoor();
+        //   this.playResetDoorHandleSound();
+
+        const targetRadians = 700 * (Math.PI / 180);
+        gsap.to(this.vaultHandle, {
+          rotation: targetRadians,
+          duration: 2.4,
+          ease: "back.out(1.2)",
+        });
+
+        gsap.to(this.handleShadow, {
+          rotation: targetRadians,
+          duration: 2.4,
+          ease: "back.out(1.2)",
+        });
+
+        this.currentGuesses = [];
+
+        new Promise((resolve) => setTimeout(resolve, 1000)).then(() => {
+          this.updateGuessesDisplay();
+          this.guessesText.visible = true;
+
+          this.guessesText.style.fill = "#ffffff";
+          const randomCombination = this.generateRandomCombination();
+          this.secretCombination = randomCombination;
+          randomCombination.forEach((p: Pair) => console.log(p));
+        });
+      });
     } else {
       this.playLockedSound();
       this.currentGuesses = [];
       this.resetHandle();
       this.updateGuessesDisplay();
 
-      this.guessesText.text = "WRONG COMBINATION!\n\nTry again...";
-      this.guessesText.style.fill = "#ff0000";
+      //     this.guessesText.text = "WRONG COMBINATION!\n\nTry again...";
+      //   this.guessesText.style.fill = "#ff0000";
 
       setTimeout(() => {
         this.guessesText.style.fill = "#ffffff";
@@ -339,14 +413,6 @@ export default class Game extends Container {
       }, 2000);
     }
   }
-
-  // private startBlinking() {
-  //  const blink = () => {
-  //   this.vaultBlink1.alpha = this.vaultBlink1.alpha === 1 ? 0.3 : 1;
-  //  setTimeout(blink, 800 + Math.random() * 400);
-  //};
-  //blink();
-  //}
 
   private setupArrowInteraction() {
     this.arrowLeft.eventMode = "static";
@@ -627,4 +693,12 @@ export default class Game extends Container {
       console.warn("Audio play failed:", e);
     });
   }
+
+  // private playResetDoorHandleSound() {
+  //  const audio = new Audio("/sounds/lock.mp3");
+
+  //audio.play().catch((e) => {
+  // console.warn("Audio play failed:", e);
+  // });
+  // }
 }
