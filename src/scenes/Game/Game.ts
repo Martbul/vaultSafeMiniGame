@@ -7,19 +7,16 @@ import {
   TextStyle,
   Rectangle,
 } from "pixi.js";
-import { centerObjects } from "../utils/misc";
-import { SceneUtils } from "../core/App";
 import gsap from "gsap";
-
-type RotatingDirection = "clockwise" | "counterclockwise";
-
-type Pair = {
-  value: number;
-  rotatingDirection: RotatingDirection;
-};
-
+import { SceneUtils } from "../../core/App";
+import SoundManager from "./managers/SoundManager";
+import { centerObjects } from "../../utils/misc";
+import GameLogicManager from "./managers/GameLogicManager";
 export default class Game extends Container {
   name = "Game";
+
+  private soundManager: SoundManager;
+  private gameLogicManager: GameLogicManager;
 
   private background!: Container;
   private saveCurrentGuessContainer!: Container;
@@ -36,13 +33,15 @@ export default class Game extends Container {
   private arrowRight!: Sprite;
   private arrowLeft!: Sprite;
   private isDoorOpen = false;
-  private currentHandleDeg = 0;
-  private currentHandleSecretNumber = 0;
-  private currentGuesses: Pair[] = [];
+  public currentHandleDeg = 0;
+  public currentHandleSecretNumber = 0;
+  public currentGuesses: Pair[] = [];
   private secretCombination!: Pair[];
   private blinkTimeouts: number[] = [];
   constructor(protected utils: SceneUtils) {
     super();
+    this.soundManager = new SoundManager();
+    this.gameLogicManager = new GameLogicManager(this);
   }
 
   async load() {
@@ -66,7 +65,7 @@ export default class Game extends Container {
 
   async start() {
     console.log("Generated new combination");
-    const randomCombination = this.generateRandomCombination();
+    const randomCombination = this.gameLogicManager.generateRandomCombination();
     randomCombination.forEach((p: Pair) => console.log(p));
     this.secretCombination = randomCombination;
 
@@ -135,8 +134,8 @@ export default class Game extends Container {
     );
     this.saveCurrentGuessContainer.interactive = true;
     this.saveCurrentGuessContainer.on("pointerdown", () => {
-      this.playClickngSound();
-      this.saveCurrentGuess();
+      this.soundManager.playClickingSound();
+      this.gameLogicManager.saveCurrentGuess();
     });
     this.background.addChild(this.saveCurrentGuessContainer);
 
@@ -320,33 +319,12 @@ export default class Game extends Container {
     this.background.addChild(this.instructionsText, this.guessesText);
   }
 
-  private updateGuessesDisplay() {
+  public updateGuessesDisplay() {
     let displayText = "";
 
     displayText += `\n${3 - this.currentGuesses.length} MORE ROTATIONS`;
 
     this.guessesText.text = displayText;
-  }
-
-  private saveCurrentGuess() {
-    if (this.currentGuesses.length >= 3) {
-      this.checkCombination();
-      return;
-    }
-
-    const currentGuess: Pair = {
-      value: Math.abs(this.currentHandleSecretNumber) % 10,
-      rotatingDirection:
-        this.currentHandleDeg >= 0 ? "clockwise" : "counterclockwise",
-    };
-
-    this.currentGuesses.push(currentGuess);
-    this.resetHandle();
-    this.updateGuessesDisplay();
-
-    if (this.currentGuesses.length === 3) {
-      this.checkCombination();
-    }
   }
 
   private startBlinking() {
@@ -380,7 +358,7 @@ export default class Game extends Container {
     this.vaultBlink3.alpha = 1;
   }
 
-  private checkCombination() {
+  public checkCombination() {
     let isCorrect = true;
 
     for (let i = 0; i < 3; i++) {
@@ -425,18 +403,20 @@ export default class Game extends Container {
 
           this.guessesText.style.fill = "#ffffff";
           console.log("Generated new combination");
-          const randomCombination = this.generateRandomCombination();
+          const randomCombination =
+            this.gameLogicManager.generateRandomCombination();
           this.secretCombination = randomCombination;
           randomCombination.forEach((p: Pair) => console.log(p));
         });
       });
     } else {
-      this.playLockedSound();
+      this.soundManager.playLockedSound();
       this.currentGuesses = [];
       this.resetHandle();
       this.updateGuessesDisplay();
       console.log("Generated new combination");
-      const randomCombination = this.generateRandomCombination();
+      const randomCombination =
+        this.gameLogicManager.generateRandomCombination();
       this.secretCombination = randomCombination;
       randomCombination.forEach((p: Pair) => console.log(p));
       setTimeout(() => {
@@ -456,7 +436,7 @@ export default class Game extends Container {
       this.currentHandleDeg += 60;
       this.currentHandleSecretNumber += 1;
 
-      this.playHandleRotatingSound();
+      this.soundManager.playHandleRotatingSound();
 
       this.animateHandleRotation(this.currentHandleDeg);
     });
@@ -465,13 +445,12 @@ export default class Game extends Container {
       this.currentHandleDeg -= 60;
       this.currentHandleSecretNumber -= 1;
 
-      this.playHandleRotatingSound();
-
+      this.soundManager.playHandleRotatingSound();
       this.animateHandleRotation(this.currentHandleDeg);
     });
   }
 
-  private resetHandle() {
+  public resetHandle() {
     this.currentHandleDeg = 0;
     this.currentHandleSecretNumber = 0;
     this.animateHandleRotation(0);
@@ -511,7 +490,7 @@ export default class Game extends Container {
     this.arrowLeft.visible = false;
     this.arrowRight.visible = false;
 
-    this.playDoorOpenSound();
+    this.soundManager.playDoorOpenSound();
   }
 
   private closeDoor() {
@@ -672,65 +651,4 @@ export default class Game extends Container {
       }
     }
   }
-
-  private generateRandomCombination(): Pair[] {
-    const pairs: Pair[] = [];
-
-    for (let i = 0; i < 3; i++) {
-      const randomNumber = Math.floor(Math.random() * 9) + 1;
-      const oddOrEvenNum = Math.random();
-      let rotatingDirection: RotatingDirection;
-
-      if (oddOrEvenNum < 0.5) {
-        rotatingDirection = "clockwise";
-      } else {
-        rotatingDirection = "counterclockwise";
-      }
-
-      const pair: Pair = {
-        value: randomNumber,
-        rotatingDirection: rotatingDirection,
-      };
-
-      pairs.push(pair);
-    }
-
-    return pairs;
-  }
-
-  private playDoorOpenSound() {
-    const audio = new Audio("/sounds/shine.mp3");
-    audio.play().catch((e) => {
-      console.warn("Audio play failed:", e);
-    });
-  }
-
-  private playHandleRotatingSound() {
-    const audio = new Audio("/sounds/doorSwing.mp3");
-    audio.play().catch((e) => {
-      console.warn("Audio play failed:", e);
-    });
-  }
-
-  private playClickngSound() {
-    const audio = new Audio("/sounds/click.mp3");
-    audio.play().catch((e) => {
-      console.warn("Audio play failed:", e);
-    });
-  }
-
-  private playLockedSound() {
-    const audio = new Audio("/sounds/locked.mp3");
-    audio.play().catch((e) => {
-      console.warn("Audio play failed:", e);
-    });
-  }
-
-  // private playResetDoorHandleSound() {
-  //  const audio = new Audio("/sounds/lock.mp3");
-
-  //audio.play().catch((e) => {
-  // console.warn("Audio play failed:", e);
-  // });
-  // }
 }

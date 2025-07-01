@@ -1,7 +1,6 @@
 import { Application } from "pixi.js";
 import AssetLoader from "./AssetLoader";
-import Game from "../scenes/Game";
-
+import Game from "../scenes/Game/Game";
 export interface SceneUtils {
   assetLoader: AssetLoader;
 }
