@@ -32,7 +32,7 @@ export default class AssetLoader {
       this.manifest.map((asset) => asset.name),
     );
 
-    Debug.log("✅ Loaded assets", resources);
+    Debug.log("Loaded assets", resources);
 
     return resources;
   }

@@ -6,7 +6,7 @@ export default class SceneManager {
   private bgSprite!: Sprite;
   private doorScale!: number;
 
-  constructor(private game: Game) { }
+  constructor(private game: Game) {}
 
   public positionRelativeToBg(
     bg: Sprite,
@@ -147,6 +147,29 @@ export default class SceneManager {
     return this.createRotationArrow(0.41, 0.49, 240, true);
   }
 
+  public setupArrowInteraction() {
+    this.game.arrowLeft.eventMode = "static";
+    this.game.arrowLeft.cursor = "pointer";
+    this.game.arrowRight.eventMode = "static";
+    this.game.arrowRight.cursor = "pointer";
+
+    this.game.arrowRight.on("pointerdown", () => {
+      this.game.currentHandleDeg += 60;
+      this.game.currentHandleSecretNumber += 1;
+
+      this.game.soundManager.playHandleRotatingSound();
+
+      this.game.animateHandleRotation(this.game.currentHandleDeg);
+    });
+
+    this.game.arrowLeft.on("pointerdown", () => {
+      this.game.currentHandleDeg -= 60;
+      this.game.currentHandleSecretNumber -= 1;
+
+      this.game.soundManager.playHandleRotatingSound();
+      this.game.animateHandleRotation(this.game.currentHandleDeg);
+    });
+  }
   public startBlinking() {
     const blink1 = () => {
       this.game.vaultBlink1.alpha = this.game.vaultBlink1.alpha === 1 ? 0.3 : 1;
@@ -176,6 +199,62 @@ export default class SceneManager {
     this.game.vaultBlink1.alpha = 1;
     this.game.vaultBlink2.alpha = 1;
     this.game.vaultBlink3.alpha = 1;
+  }
+
+  //TODO: Fix it,this does not work
+  private openDoorAnimation() {
+    gsap.to(this.game.vaultDoor, {
+      duration: 2,
+      rotateY: -Math.PI / 2,
+      ease: "power2.inOut",
+    });
+  }
+
+  public openDoor() {
+    this.openDoorAnimation();
+    this.game.isDoorOpen = true;
+    this.game.vaultDoor.texture = Texture.from("doorOpen");
+
+    const openPos = this.game.sceneManager.positionRelativeToBg(
+      this.bgSprite,
+      0.845,
+      0.79,
+    );
+    this.game.vaultDoor.x = openPos.x;
+    this.game.vaultDoor.y = openPos.y;
+
+    this.game.doorShadow.visible = true;
+    this.game.handleShadow.visible = false;
+    this.game.vaultHandle.visible = false;
+    this.game.vaultBlink1.visible = true;
+    this.game.vaultBlink2.visible = true;
+    this.game.vaultBlink3.visible = true;
+    this.game.arrowLeft.visible = false;
+    this.game.arrowRight.visible = false;
+
+    this.game.soundManager.playDoorOpenSound();
+  }
+
+  public closeDoor() {
+    this.game.isDoorOpen = false;
+    this.game.vaultDoor.texture = Texture.from("door");
+
+    const closedPos = this.game.sceneManager.positionRelativeToBg(
+      this.bgSprite,
+      0.68,
+      0.79,
+    );
+    this.game.vaultDoor.x = closedPos.x;
+    this.game.vaultDoor.y = closedPos.y;
+
+    this.game.doorShadow.visible = false;
+    this.game.handleShadow.visible = true;
+    this.game.vaultHandle.visible = true;
+    this.game.vaultBlink1.visible = false;
+    this.game.vaultBlink2.visible = false;
+    this.game.vaultBlink3.visible = false;
+    this.game.arrowRight.visible = true;
+    this.game.arrowLeft.visible = true;
   }
 
   private createRotationArrow(

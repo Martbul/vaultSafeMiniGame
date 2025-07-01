@@ -1,4 +1,4 @@
-import { Container, Text, Graphics, Sprite, Texture } from "pixi.js";
+import { Container, Text, Graphics, Sprite } from "pixi.js";
 import gsap from "gsap";
 import { SceneUtils } from "../../core/App";
 import SoundManager from "./managers/SoundManager";
@@ -11,29 +11,31 @@ export default class Game extends Container {
   name = "Game";
 
   public soundManager: SoundManager;
-  private gameLogicManager: GameLogicManager;
+  public gameLogicManager: GameLogicManager;
   public sceneManager: SceneManager;
   public textUIManager: TextUIManager;
+
+  public uiContainer = new Container();
 
   public background!: Container;
   public saveCurrentGuessContainer!: Container;
   public bgSprite!: Sprite;
-  private vaultDoor!: Sprite;
-  private vaultHandle!: Sprite;
+  public vaultDoor!: Sprite;
+  public vaultHandle!: Sprite;
   public vaultBlink1!: Sprite;
   public vaultBlink2!: Sprite;
   public vaultBlink3!: Sprite;
-  private doorShadow!: Sprite;
+  public doorShadow!: Sprite;
   public instructionsText!: Text;
   public guessesText!: Text;
-  private handleShadow!: Sprite;
-  private arrowRight!: Sprite;
-  private arrowLeft!: Sprite;
-  private isDoorOpen = false;
+  public handleShadow!: Sprite;
+  public arrowRight!: Sprite;
+  public arrowLeft!: Sprite;
+  public isDoorOpen = false;
   public currentHandleDeg = 0;
   public currentHandleSecretNumber = 0;
   public currentGuesses: Pair[] = [];
-  private secretCombination!: Pair[];
+  public secretCombination!: Pair[];
   public blinkTimeouts: number[] = [];
 
   constructor(protected utils: SceneUtils) {
@@ -76,8 +78,11 @@ export default class Game extends Container {
 
     this.addChild(this.background);
 
-    this.setupArrowInteraction();
+    this.sceneManager.setupArrowInteraction();
     this.textUIManager.updateGuessesDisplay();
+
+    this.uiContainer.addChild(this.background);
+    this.addChild(this.uiContainer);
   }
 
   private setupVaultBackground() {
@@ -131,98 +136,6 @@ export default class Game extends Container {
     );
   }
 
-  public checkCombination() {
-    let isCorrect = true;
-
-    for (let i = 0; i < 3; i++) {
-      if (
-        this.currentGuesses[i].value !== this.secretCombination[i].value ||
-        this.currentGuesses[i].rotatingDirection !==
-        this.secretCombination[i].rotatingDirection
-      ) {
-        isCorrect = false;
-        break;
-      }
-    }
-
-    if (isCorrect) {
-      this.openDoor();
-      this.guessesText.visible = false;
-      this.sceneManager.startBlinking();
-
-      new Promise((resolve) => setTimeout(resolve, 5000)).then(() => {
-        this.closeDoor();
-        this.sceneManager.stopBlinking();
-        //   this.playResetDoorHandleSound();
-
-        const targetRadians = 700 * (Math.PI / 180);
-        gsap.to(this.vaultHandle, {
-          rotation: targetRadians,
-          duration: 2.4,
-          ease: "back.out(1.2)",
-        });
-
-        gsap.to(this.handleShadow, {
-          rotation: targetRadians,
-          duration: 2.4,
-          ease: "back.out(1.2)",
-        });
-
-        this.currentGuesses = [];
-
-        new Promise((resolve) => setTimeout(resolve, 1000)).then(() => {
-          this.textUIManager.updateGuessesDisplay();
-          this.guessesText.visible = true;
-
-          this.guessesText.style.fill = "#ffffff";
-          console.log("Generated new combination");
-          const randomCombination =
-            this.gameLogicManager.generateRandomCombination();
-          this.secretCombination = randomCombination;
-          randomCombination.forEach((p: Pair) => console.log(p));
-        });
-      });
-    } else {
-      this.soundManager.playLockedSound();
-      this.currentGuesses = [];
-      this.gameLogicManager.resetHandle();
-      this.textUIManager.updateGuessesDisplay();
-      console.log("Generated new combination");
-      const randomCombination =
-        this.gameLogicManager.generateRandomCombination();
-      this.secretCombination = randomCombination;
-      randomCombination.forEach((p: Pair) => console.log(p));
-      setTimeout(() => {
-        this.guessesText.style.fill = "#ffffff";
-        this.textUIManager.updateGuessesDisplay();
-      }, 2000);
-    }
-  }
-
-  private setupArrowInteraction() {
-    this.arrowLeft.eventMode = "static";
-    this.arrowLeft.cursor = "pointer";
-    this.arrowRight.eventMode = "static";
-    this.arrowRight.cursor = "pointer";
-
-    this.arrowRight.on("pointerdown", () => {
-      this.currentHandleDeg += 60;
-      this.currentHandleSecretNumber += 1;
-
-      this.soundManager.playHandleRotatingSound();
-
-      this.animateHandleRotation(this.currentHandleDeg);
-    });
-
-    this.arrowLeft.on("pointerdown", () => {
-      this.currentHandleDeg -= 60;
-      this.currentHandleSecretNumber -= 1;
-
-      this.soundManager.playHandleRotatingSound();
-      this.animateHandleRotation(this.currentHandleDeg);
-    });
-  }
-
   public animateHandleRotation(targetDegrees: number) {
     const targetRadians = targetDegrees * (Math.PI / 180);
 
@@ -239,203 +152,16 @@ export default class Game extends Container {
     });
   }
 
-  private openDoor() {
-    this.isDoorOpen = true;
-    this.vaultDoor.texture = Texture.from("doorOpen");
+  public onResize(width: number, height: number) {
+    const baseWidth = 1920;
+    const baseHeight = 1080;
 
-    const openPos = this.sceneManager.positionRelativeToBg(
-      this.bgSprite,
-      0.845,
-      0.79,
-    );
-    this.vaultDoor.x = openPos.x;
-    this.vaultDoor.y = openPos.y;
+    const scale = Math.min(width / baseWidth, height / baseHeight);
+    this.uiContainer.scale.set(scale);
 
-    this.doorShadow.visible = true;
-    this.handleShadow.visible = false;
-    this.vaultHandle.visible = false;
-    this.vaultBlink1.visible = true;
-    this.vaultBlink2.visible = true;
-    this.vaultBlink3.visible = true;
-    this.arrowLeft.visible = false;
-    this.arrowRight.visible = false;
+    this.uiContainer.x = width / 2;
+    this.uiContainer.y = height / 2;
 
-    this.soundManager.playDoorOpenSound();
-  }
-
-  public closeDoor() {
-    this.isDoorOpen = false;
-    this.vaultDoor.texture = Texture.from("door");
-
-    const closedPos = this.sceneManager.positionRelativeToBg(
-      this.bgSprite,
-      0.68,
-      0.79,
-    );
-    this.vaultDoor.x = closedPos.x;
-    this.vaultDoor.y = closedPos.y;
-
-    this.doorShadow.visible = false;
-    this.handleShadow.visible = true;
-    this.vaultHandle.visible = true;
-    this.vaultBlink1.visible = false;
-    this.vaultBlink2.visible = false;
-    this.vaultBlink3.visible = false;
-    this.arrowRight.visible = true;
-    this.arrowLeft.visible = true;
-  }
-
-  onResize(width: number, height: number) {
-    if (this.bgSprite) {
-      const scaleX = width / this.bgSprite.texture.width;
-      const scaleY = height / this.bgSprite.texture.height;
-      const scale = Math.max(scaleX, scaleY);
-
-      this.bgSprite.scale.set(scale);
-      this.bgSprite.x = width / 2;
-      this.bgSprite.y = height / 2;
-
-      const doorScale = Math.min(
-        (this.bgSprite.height * 0.61) / this.vaultDoor.texture.height,
-        (this.bgSprite.width * 0.43) / this.vaultDoor.texture.width,
-      );
-
-      if (this.vaultDoor) {
-        const doorPos = this.isDoorOpen
-          ? this.sceneManager.positionRelativeToBg(this.bgSprite, 0.845, 0.79)
-          : this.sceneManager.positionRelativeToBg(this.bgSprite, 0.68, 0.79);
-        this.vaultDoor.x = doorPos.x;
-        this.vaultDoor.y = doorPos.y;
-        this.vaultDoor.scale.set(doorScale);
-      }
-
-      if (this.doorShadow) {
-        const doorShadowPos = this.sceneManager.positionRelativeToBg(
-          this.bgSprite,
-          0.867,
-          0.806,
-        );
-        this.doorShadow.x = doorShadowPos.x;
-        this.doorShadow.y = doorShadowPos.y;
-        this.doorShadow.scale.set(doorScale);
-      }
-
-      if (this.vaultHandle) {
-        const handlePos = this.sceneManager.positionRelativeToBg(
-          this.bgSprite,
-          0.498,
-          0.484,
-        );
-        this.vaultHandle.x = handlePos.x;
-        this.vaultHandle.y = handlePos.y;
-        this.vaultHandle.scale.set(doorScale);
-      }
-
-      if (this.handleShadow) {
-        const handleShadowPos = this.sceneManager.positionRelativeToBg(
-          this.bgSprite,
-          0.5,
-          0.493,
-        );
-        this.handleShadow.x = handleShadowPos.x;
-        this.handleShadow.y = handleShadowPos.y;
-        this.handleShadow.scale.set(doorScale);
-      }
-
-      if (this.vaultBlink1) {
-        const blinkPos1 = this.sceneManager.positionRelativeToBg(
-          this.bgSprite,
-          0.41,
-          0.5,
-        );
-        this.vaultBlink1.x = blinkPos1.x;
-        this.vaultBlink1.y = blinkPos1.y;
-        this.vaultBlink1.scale.set(doorScale * 0.5);
-      }
-
-      if (this.vaultBlink2) {
-        const blinkPos2 = this.sceneManager.positionRelativeToBg(
-          this.bgSprite,
-          0.52,
-          0.61,
-        );
-        this.vaultBlink2.x = blinkPos2.x;
-        this.vaultBlink2.y = blinkPos2.y;
-        this.vaultBlink2.scale.set(doorScale * 0.5);
-      }
-
-      if (this.vaultBlink3) {
-        const blinkPos3 = this.sceneManager.positionRelativeToBg(
-          this.bgSprite,
-          0.48,
-          0.5,
-        );
-        this.vaultBlink3.x = blinkPos3.x;
-        this.vaultBlink3.y = blinkPos3.y;
-        this.vaultBlink3.scale.set(doorScale * 0.5);
-      }
-
-      if (this.arrowRight) {
-        const arrowRightPos = this.sceneManager.positionRelativeToBg(
-          this.bgSprite,
-          0.583,
-          0.49,
-        );
-        this.arrowRight.x = arrowRightPos.x;
-        this.arrowRight.y = arrowRightPos.y;
-        this.arrowRight.scale.set(doorScale * 0.55);
-      }
-
-      if (this.arrowLeft) {
-        const arrowLeftPos = this.sceneManager.positionRelativeToBg(
-          this.bgSprite,
-          0.41,
-          0.49,
-        );
-        this.arrowLeft.x = arrowLeftPos.x;
-        this.arrowLeft.y = arrowLeftPos.y;
-        this.arrowLeft.scale.set(doorScale * 0.55);
-        this.arrowLeft.scale.x = -doorScale * 0.55;
-      }
-
-      if (this.saveCurrentGuessContainer) {
-        const saveCurrentGuessContainerPos =
-          this.sceneManager.positionRelativeToBg(this.bgSprite, 0.304, 0.492);
-        this.saveCurrentGuessContainer.x = saveCurrentGuessContainerPos.x;
-        this.saveCurrentGuessContainer.y = saveCurrentGuessContainerPos.y;
-        this.saveCurrentGuessContainer.scale.set(doorScale);
-      }
-
-      if (this.instructionsText) {
-        const instructionsPos = this.sceneManager.positionRelativeToBg(
-          this.bgSprite,
-          0.15,
-          0.5,
-        );
-        this.instructionsText.x = instructionsPos.x;
-        this.instructionsText.y = instructionsPos.y;
-
-        const textScale = Math.min(width / 1920, height / 1080) * 1.2;
-        this.instructionsText.style.fontSize = Math.max(16, 24 * textScale);
-        this.instructionsText.style.wordWrapWidth = Math.max(
-          200,
-          300 * textScale,
-        );
-      }
-
-      if (this.guessesText) {
-        const guessesPos = this.sceneManager.positionRelativeToBg(
-          this.bgSprite,
-          0.85,
-          0.5,
-        );
-        this.guessesText.x = guessesPos.x;
-        this.guessesText.y = guessesPos.y;
-
-        const textScale = Math.min(width / 1920, height / 1080) * 1.2;
-        this.guessesText.style.fontSize = Math.max(14, 22 * textScale);
-        this.guessesText.style.wordWrapWidth = Math.max(180, 280 * textScale);
-      }
-    }
+    this.uiContainer.pivot.set(baseWidth / 2, baseHeight / 2);
   }
 }

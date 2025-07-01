@@ -31,7 +31,7 @@ export default class App extends Application {
 
     this.game.start();
 
-    window.addEventListener("resize", this.onResize);
+    window.addEventListener("resize", (ev) => this.onResize(ev));
   }
 
   private onResize(ev: UIEvent) {
