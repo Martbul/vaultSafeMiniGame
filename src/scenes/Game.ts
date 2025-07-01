@@ -18,11 +18,6 @@ type Pair = {
   rotatingDirection: RotatingDirection;
 };
 
-//TODO: Make the UI responsible based on divice
-//TODO: Add posthood tyo track wnners, loosers, needed trys
-//Add souds on wriong guess, on success, on rortation, on clickin gthe red button, on gold shine
-//USse promises
-////Read the document once again
 export default class Game extends Container {
   name = "Game";
 
@@ -45,7 +40,7 @@ export default class Game extends Container {
   private currentHandleSecretNumber = 0;
   private currentGuesses: Pair[] = [];
   private secretCombination!: Pair[];
-
+  private blinkTimeouts: number[] = [];
   constructor(protected utils: SceneUtils) {
     super();
   }
@@ -70,6 +65,7 @@ export default class Game extends Container {
   }
 
   async start() {
+    console.log("Generated new combination");
     const randomCombination = this.generateRandomCombination();
     randomCombination.forEach((p: Pair) => console.log(p));
     this.secretCombination = randomCombination;
@@ -123,6 +119,8 @@ export default class Game extends Container {
       0.304,
       0.492,
     );
+    this.saveCurrentGuessContainer.eventMode = "static";
+    this.saveCurrentGuessContainer.cursor = "pointer";
     this.saveCurrentGuessContainer.x = saveCurrentGuessContainerPos.x;
     this.saveCurrentGuessContainer.y = saveCurrentGuessContainerPos.y;
     this.saveCurrentGuessContainer.scale.set(doorScale);
@@ -351,6 +349,37 @@ export default class Game extends Container {
     }
   }
 
+  private startBlinking() {
+    const blink1 = () => {
+      this.vaultBlink1.alpha = this.vaultBlink1.alpha === 1 ? 0.3 : 1;
+      const t = setTimeout(blink1, 800 + Math.random() * 400);
+      this.blinkTimeouts.push(t);
+    };
+
+    const blink2 = () => {
+      this.vaultBlink2.alpha = this.vaultBlink2.alpha === 1 ? 0.3 : 1;
+      const t = setTimeout(blink2, 400 + Math.random() * 600);
+      this.blinkTimeouts.push(t);
+    };
+
+    const blink3 = () => {
+      this.vaultBlink3.alpha = this.vaultBlink3.alpha === 1 ? 0.3 : 1;
+      const t = setTimeout(blink3, 600 + Math.random() * 555);
+      this.blinkTimeouts.push(t);
+    };
+    blink1();
+    blink2();
+    blink3();
+  }
+
+  private stopBlinking() {
+    this.blinkTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+
+    this.vaultBlink1.alpha = 1;
+    this.vaultBlink2.alpha = 1;
+    this.vaultBlink3.alpha = 1;
+  }
+
   private checkCombination() {
     let isCorrect = true;
 
@@ -358,7 +387,7 @@ export default class Game extends Container {
       if (
         this.currentGuesses[i].value !== this.secretCombination[i].value ||
         this.currentGuesses[i].rotatingDirection !==
-          this.secretCombination[i].rotatingDirection
+        this.secretCombination[i].rotatingDirection
       ) {
         isCorrect = false;
         break;
@@ -368,9 +397,11 @@ export default class Game extends Container {
     if (isCorrect) {
       this.openDoor();
       this.guessesText.visible = false;
+      this.startBlinking();
 
       new Promise((resolve) => setTimeout(resolve, 5000)).then(() => {
         this.closeDoor();
+        this.stopBlinking();
         //   this.playResetDoorHandleSound();
 
         const targetRadians = 700 * (Math.PI / 180);
@@ -393,6 +424,7 @@ export default class Game extends Container {
           this.guessesText.visible = true;
 
           this.guessesText.style.fill = "#ffffff";
+          console.log("Generated new combination");
           const randomCombination = this.generateRandomCombination();
           this.secretCombination = randomCombination;
           randomCombination.forEach((p: Pair) => console.log(p));
@@ -403,10 +435,10 @@ export default class Game extends Container {
       this.currentGuesses = [];
       this.resetHandle();
       this.updateGuessesDisplay();
-
-      //     this.guessesText.text = "WRONG COMBINATION!\n\nTry again...";
-      //   this.guessesText.style.fill = "#ff0000";
-
+      console.log("Generated new combination");
+      const randomCombination = this.generateRandomCombination();
+      this.secretCombination = randomCombination;
+      randomCombination.forEach((p: Pair) => console.log(p));
       setTimeout(() => {
         this.guessesText.style.fill = "#ffffff";
         this.updateGuessesDisplay();
