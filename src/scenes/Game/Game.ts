@@ -1,4 +1,4 @@
-import { Container, Text, Graphics, Sprite, Texture, TextStyle } from "pixi.js";
+import { Container, Text, Graphics, Sprite, Texture } from "pixi.js";
 import gsap from "gsap";
 import { SceneUtils } from "../../core/App";
 import SoundManager from "./managers/SoundManager";
@@ -6,25 +6,26 @@ import { centerObjects } from "../../utils/misc";
 import GameLogicManager from "./managers/GameLogicManager";
 import SceneManager from "./managers/SceneManager";
 import TextUIManager from "./managers/TextUIManager";
+
 export default class Game extends Container {
   name = "Game";
 
-  private soundManager: SoundManager;
+  public soundManager: SoundManager;
   private gameLogicManager: GameLogicManager;
-  private sceneManager: SceneManager;
-  private textUIManager: TextUIManager;
+  public sceneManager: SceneManager;
+  public textUIManager: TextUIManager;
 
   public background!: Container;
   public saveCurrentGuessContainer!: Container;
-  private bgSprite!: Sprite;
+  public bgSprite!: Sprite;
   private vaultDoor!: Sprite;
   private vaultHandle!: Sprite;
   public vaultBlink1!: Sprite;
   public vaultBlink2!: Sprite;
   public vaultBlink3!: Sprite;
   private doorShadow!: Sprite;
-  private instructionsText!: Text;
-  private guessesText!: Text;
+  public instructionsText!: Text;
+  public guessesText!: Text;
   private handleShadow!: Sprite;
   private arrowRight!: Sprite;
   private arrowLeft!: Sprite;
@@ -71,12 +72,12 @@ export default class Game extends Container {
     this.removeChildren();
 
     this.setupVaultBackground();
-    this.setupTextDisplays();
+    this.textUIManager.setupTextDisplays();
 
     this.addChild(this.background);
 
     this.setupArrowInteraction();
-    this.updateGuessesDisplay();
+    this.textUIManager.updateGuessesDisplay();
   }
 
   private setupVaultBackground() {
@@ -130,78 +131,6 @@ export default class Game extends Container {
     );
   }
 
-  private setupTextDisplays() {
-    const instructionsTextStyle = new TextStyle({
-      fontSize: 24,
-      fill: ["ffffff"],
-      align: "left",
-      wordWrap: true,
-      wordWrapWidth: 340,
-      lineHeight: 32,
-      dropShadow: true,
-      dropShadowColor: "#000000",
-      dropShadowBlur: 8,
-      dropShadowAngle: Math.PI / 4,
-      dropShadowDistance: 6,
-      stroke: "#003300",
-      strokeThickness: 4,
-      letterSpacing: 1,
-    });
-
-    this.instructionsText = new Text(
-      "HOW TO PLAY:\n\n• Find the 3 number and rotation combination\n• Click on the keypad to save your guess",
-      instructionsTextStyle,
-    );
-    this.instructionsText.resolution = 2;
-
-    const instructionsPos = this.sceneManager.positionRelativeToBg(
-      this.bgSprite,
-      0.15,
-      0.5,
-    );
-    this.instructionsText.x = instructionsPos.x;
-    this.instructionsText.y = instructionsPos.y;
-    this.instructionsText.anchor.set(0.5);
-
-    const guessesTextStyle = new TextStyle({
-      fontFamily: "Impact",
-      fontSize: 34,
-      fill: ["ffffff"],
-      align: "left",
-      wordWrap: true,
-      wordWrapWidth: 340,
-      lineHeight: 42,
-      dropShadow: true,
-      dropShadowColor: "#000000",
-      dropShadowBlur: 8,
-      dropShadowAngle: Math.PI / 4,
-      dropShadowDistance: 6,
-      stroke: "#003300",
-      strokeThickness: 4,
-      letterSpacing: 1,
-    });
-    this.guessesText = new Text("", guessesTextStyle);
-    this.guessesText.resolution = 2;
-
-    const guessesPos = this.sceneManager.positionRelativeToBg(
-      this.bgSprite,
-      0.85,
-      0.5,
-    );
-    this.guessesText.x = guessesPos.x;
-    this.guessesText.y = guessesPos.y;
-    this.guessesText.anchor.set(0.5);
-
-    this.background.addChild(this.instructionsText, this.guessesText);
-  }
-
-  public updateGuessesDisplay() {
-    let displayText = "";
-
-    displayText += `\n${3 - this.currentGuesses.length} MORE ROTATIONS`;
-
-    this.guessesText.text = displayText;
-  }
   public checkCombination() {
     let isCorrect = true;
 
@@ -242,7 +171,7 @@ export default class Game extends Container {
         this.currentGuesses = [];
 
         new Promise((resolve) => setTimeout(resolve, 1000)).then(() => {
-          this.updateGuessesDisplay();
+          this.textUIManager.updateGuessesDisplay();
           this.guessesText.visible = true;
 
           this.guessesText.style.fill = "#ffffff";
@@ -256,8 +185,8 @@ export default class Game extends Container {
     } else {
       this.soundManager.playLockedSound();
       this.currentGuesses = [];
-      this.resetHandle();
-      this.updateGuessesDisplay();
+      this.gameLogicManager.resetHandle();
+      this.textUIManager.updateGuessesDisplay();
       console.log("Generated new combination");
       const randomCombination =
         this.gameLogicManager.generateRandomCombination();
@@ -265,7 +194,7 @@ export default class Game extends Container {
       randomCombination.forEach((p: Pair) => console.log(p));
       setTimeout(() => {
         this.guessesText.style.fill = "#ffffff";
-        this.updateGuessesDisplay();
+        this.textUIManager.updateGuessesDisplay();
       }, 2000);
     }
   }
@@ -294,14 +223,7 @@ export default class Game extends Container {
     });
   }
 
-  public resetHandle() {
-    this.currentHandleDeg = 0;
-    this.currentHandleSecretNumber = 0;
-    this.animateHandleRotation(0);
-    this.closeDoor();
-  }
-
-  private animateHandleRotation(targetDegrees: number) {
+  public animateHandleRotation(targetDegrees: number) {
     const targetRadians = targetDegrees * (Math.PI / 180);
 
     gsap.to(this.vaultHandle, {
@@ -341,7 +263,7 @@ export default class Game extends Container {
     this.soundManager.playDoorOpenSound();
   }
 
-  private closeDoor() {
+  public closeDoor() {
     this.isDoorOpen = false;
     this.vaultDoor.texture = Texture.from("door");
 
