@@ -1,31 +1,27 @@
-import {
-  Container,
-  Text,
-  Graphics,
-  Sprite,
-  Texture,
-  TextStyle,
-  Rectangle,
-} from "pixi.js";
+import { Container, Text, Graphics, Sprite, Texture, TextStyle } from "pixi.js";
 import gsap from "gsap";
 import { SceneUtils } from "../../core/App";
 import SoundManager from "./managers/SoundManager";
 import { centerObjects } from "../../utils/misc";
 import GameLogicManager from "./managers/GameLogicManager";
+import SceneManager from "./managers/SceneManager";
+import TextUIManager from "./managers/TextUIManager";
 export default class Game extends Container {
   name = "Game";
 
   private soundManager: SoundManager;
   private gameLogicManager: GameLogicManager;
+  private sceneManager: SceneManager;
+  private textUIManager: TextUIManager;
 
-  private background!: Container;
-  private saveCurrentGuessContainer!: Container;
+  public background!: Container;
+  public saveCurrentGuessContainer!: Container;
   private bgSprite!: Sprite;
   private vaultDoor!: Sprite;
   private vaultHandle!: Sprite;
-  private vaultBlink1!: Sprite;
-  private vaultBlink2!: Sprite;
-  private vaultBlink3!: Sprite;
+  public vaultBlink1!: Sprite;
+  public vaultBlink2!: Sprite;
+  public vaultBlink3!: Sprite;
   private doorShadow!: Sprite;
   private instructionsText!: Text;
   private guessesText!: Text;
@@ -37,11 +33,14 @@ export default class Game extends Container {
   public currentHandleSecretNumber = 0;
   public currentGuesses: Pair[] = [];
   private secretCombination!: Pair[];
-  private blinkTimeouts: number[] = [];
+  public blinkTimeouts: number[] = [];
+
   constructor(protected utils: SceneUtils) {
     super();
     this.soundManager = new SoundManager();
     this.gameLogicManager = new GameLogicManager(this);
+    this.sceneManager = new SceneManager(this);
+    this.textUIManager = new TextUIManager(this);
   }
 
   async load() {
@@ -84,182 +83,51 @@ export default class Game extends Container {
     this.background = new Container();
     this.saveCurrentGuessContainer = new Container();
 
-    const texture = Texture.from("bg");
-    const bgSprite = new Sprite(texture);
-    const screenW = window.innerWidth;
-    const screenH = window.innerHeight;
-    const scaleX = screenW / texture.width;
-    const scaleY = screenH / texture.height;
-    const scale = Math.max(scaleX, scaleY);
-
-    bgSprite.scale.set(scale);
-    bgSprite.anchor.set(0.5);
-    bgSprite.x = screenW / 2;
-    bgSprite.y = screenH / 2;
+    const bgSprite = this.sceneManager.getBackgroundSprite();
     this.bgSprite = bgSprite;
-    this.background.addChild(bgSprite);
 
-    const vaultDoorTex = Texture.from("door");
-    const tempDoor = new Sprite(vaultDoorTex);
-    const doorScale = Math.min(
-      (bgSprite.height * 0.61) / tempDoor.height,
-      (bgSprite.width * 0.43) / tempDoor.width,
-    );
+    const vaultDoor = this.sceneManager.getVaultDoor();
+    this.vaultDoor = vaultDoor;
 
-    const doorPos = this.positionRelativeToBg(bgSprite, 0.68, 0.79);
-    this.vaultDoor = new Sprite(vaultDoorTex);
-    this.vaultDoor.anchor.set(1);
-    this.vaultDoor.x = doorPos.x;
-    this.vaultDoor.y = doorPos.y;
-    this.vaultDoor.scale.set(doorScale);
-
-    const saveCurrentGuessContainerPos = this.positionRelativeToBg(
-      bgSprite,
-      0.304,
-      0.492,
-    );
-    this.saveCurrentGuessContainer.eventMode = "static";
-    this.saveCurrentGuessContainer.cursor = "pointer";
-    this.saveCurrentGuessContainer.x = saveCurrentGuessContainerPos.x;
-    this.saveCurrentGuessContainer.y = saveCurrentGuessContainerPos.y;
-    this.saveCurrentGuessContainer.scale.set(doorScale);
-
-    const width = 270;
-    const height = 420;
-    this.saveCurrentGuessContainer.hitArea = new Rectangle(
-      -width / 2,
-      -height / 2,
-      width,
-      height,
-    );
-    this.saveCurrentGuessContainer.interactive = true;
+    this.sceneManager.setUpSaveCurrGuessContainer();
     this.saveCurrentGuessContainer.on("pointerdown", () => {
       this.soundManager.playClickingSound();
       this.gameLogicManager.saveCurrentGuess();
     });
-    this.background.addChild(this.saveCurrentGuessContainer);
 
-    const doorShadowPos = this.positionRelativeToBg(bgSprite, 0.867, 0.806);
-    this.doorShadow = new Sprite(Texture.from("doorOpenShadow"));
-    this.doorShadow.anchor.set(1);
-    this.doorShadow.x = doorShadowPos.x;
-    this.doorShadow.y = doorShadowPos.y;
-    this.doorShadow.scale.set(doorScale);
-    this.doorShadow.visible = false;
+    const doorShadow = this.sceneManager.getDoorShadow();
+    this.doorShadow = doorShadow;
 
-    const handlePos = this.positionRelativeToBg(bgSprite, 0.498, 0.484);
-    this.vaultHandle = new Sprite(Texture.from("handle"));
-    this.vaultHandle.anchor.set(0.5);
-    this.vaultHandle.x = handlePos.x;
-    this.vaultHandle.y = handlePos.y;
-    this.vaultHandle.scale.set(doorScale);
+    const vaultHandle = this.sceneManager.getVaultHandle();
+    this.vaultHandle = vaultHandle;
 
-    const handleShadowPos = this.positionRelativeToBg(bgSprite, 0.5, 0.493);
-    this.handleShadow = new Sprite(Texture.from("handleShadow"));
-    this.handleShadow.anchor.set(0.5);
-    this.handleShadow.x = handleShadowPos.x;
-    this.handleShadow.y = handleShadowPos.y;
-    this.handleShadow.scale.set(doorScale);
-    this.handleShadow.visible = true;
+    const handleShadow = this.sceneManager.getHandleShadow();
+    this.handleShadow = handleShadow;
 
-    const blinkPos1 = this.positionRelativeToBg(bgSprite, 0.41, 0.5);
-    this.vaultBlink1 = new Sprite(Texture.from("blink"));
-    this.vaultBlink1.anchor.set(0.5);
-    this.vaultBlink1.x = blinkPos1.x;
-    this.vaultBlink1.y = blinkPos1.y;
-    this.vaultBlink1.scale.set(doorScale * 0.5);
-    this.vaultBlink1.visible = false;
+    const vaultBlinks = this.sceneManager.getVaultBlinks();
+    this.vaultBlink1 = vaultBlinks.blink1;
+    this.vaultBlink2 = vaultBlinks.blink2;
+    this.vaultBlink3 = vaultBlinks.blink3;
 
-    const blinkPos2 = this.positionRelativeToBg(bgSprite, 0.52, 0.61);
-    this.vaultBlink2 = new Sprite(Texture.from("blink"));
-    this.vaultBlink2.anchor.set(0.5);
-    this.vaultBlink2.x = blinkPos2.x;
-    this.vaultBlink2.y = blinkPos2.y;
-    this.vaultBlink2.scale.set(doorScale * 0.5);
-    this.vaultBlink2.visible = false;
+    const arrowRight = this.sceneManager.getArrowRight();
+    this.arrowRight = arrowRight;
 
-    const blinkPos3 = this.positionRelativeToBg(bgSprite, 0.48, 0.5);
-    this.vaultBlink3 = new Sprite(Texture.from("blink"));
-    this.vaultBlink3.anchor.set(0.5);
-    this.vaultBlink3.x = blinkPos3.x;
-    this.vaultBlink3.y = blinkPos3.y;
-    this.vaultBlink3.scale.set(doorScale * 0.5);
-    this.vaultBlink3.visible = false;
-
-    const arrowRightPos = this.positionRelativeToBg(bgSprite, 0.583, 0.482);
-    this.arrowRight = new Sprite(Texture.from("rightrotatearrow"));
-    this.arrowRight.anchor.set(0.5);
-    this.arrowRight.x = arrowRightPos.x;
-    this.arrowRight.y = arrowRightPos.y;
-    this.arrowRight.scale.set(doorScale * 0.55);
-    this.arrowRight.rotation = 105 * (Math.PI / 180);
-    this.arrowRight.on("pointerover", () => {
-      gsap.to(this.arrowRight.scale, {
-        x: doorScale * 0.65,
-        y: doorScale * 0.65,
-        duration: 0.2,
-        ease: "power2.out",
-      });
-    });
-
-    this.arrowRight.on("pointerout", () => {
-      gsap.to(this.arrowRight.scale, {
-        x: doorScale * 0.55,
-        y: doorScale * 0.55,
-        duration: 0.2,
-        ease: "power2.out",
-      });
-    });
-
-    const arrowLeftPos = this.positionRelativeToBg(bgSprite, 0.41, 0.49);
-    this.arrowLeft = new Sprite(Texture.from("rightrotatearrow"));
-    this.arrowLeft.anchor.set(0.5);
-    this.arrowLeft.x = arrowLeftPos.x;
-    this.arrowLeft.y = arrowLeftPos.y;
-    this.arrowLeft.scale.set(doorScale * 0.55);
-    this.arrowLeft.scale.x *= -1;
-    this.arrowLeft.rotation = 240 * (Math.PI / 180);
-    this.arrowLeft.on("pointerover", () => {
-      gsap.to(this.arrowLeft.scale, {
-        x: -(doorScale * 0.65),
-
-        y: doorScale * 0.65,
-        duration: 0.2,
-        ease: "power2.out",
-      });
-    });
-
-    this.arrowLeft.on("pointerout", () => {
-      gsap.to(this.arrowLeft.scale, {
-        x: -(doorScale * 0.55),
-        y: doorScale * 0.55,
-        duration: 0.2,
-        ease: "power2.out",
-      });
-    });
+    const arrowLeft = this.sceneManager.getArrowLeft();
+    this.arrowLeft = arrowLeft;
 
     this.background.addChild(
+      this.bgSprite,
       this.doorShadow,
       this.vaultDoor,
+      this.saveCurrentGuessContainer,
       this.handleShadow,
       this.vaultHandle,
+      this.arrowLeft,
+      this.arrowRight,
       this.vaultBlink1,
       this.vaultBlink2,
       this.vaultBlink3,
-      this.arrowRight,
-      this.arrowLeft,
     );
-  }
-
-  private positionRelativeToBg(
-    bg: Sprite,
-    offsetX: number,
-    offsetY: number,
-  ): { x: number; y: number } {
-    return {
-      x: bg.x + (offsetX - 0.5) * bg.width,
-      y: bg.y + (offsetY - 0.5) * bg.height,
-    };
   }
 
   private setupTextDisplays() {
@@ -286,7 +154,11 @@ export default class Game extends Container {
     );
     this.instructionsText.resolution = 2;
 
-    const instructionsPos = this.positionRelativeToBg(this.bgSprite, 0.15, 0.5);
+    const instructionsPos = this.sceneManager.positionRelativeToBg(
+      this.bgSprite,
+      0.15,
+      0.5,
+    );
     this.instructionsText.x = instructionsPos.x;
     this.instructionsText.y = instructionsPos.y;
     this.instructionsText.anchor.set(0.5);
@@ -311,7 +183,11 @@ export default class Game extends Container {
     this.guessesText = new Text("", guessesTextStyle);
     this.guessesText.resolution = 2;
 
-    const guessesPos = this.positionRelativeToBg(this.bgSprite, 0.85, 0.5);
+    const guessesPos = this.sceneManager.positionRelativeToBg(
+      this.bgSprite,
+      0.85,
+      0.5,
+    );
     this.guessesText.x = guessesPos.x;
     this.guessesText.y = guessesPos.y;
     this.guessesText.anchor.set(0.5);
@@ -326,38 +202,6 @@ export default class Game extends Container {
 
     this.guessesText.text = displayText;
   }
-
-  private startBlinking() {
-    const blink1 = () => {
-      this.vaultBlink1.alpha = this.vaultBlink1.alpha === 1 ? 0.3 : 1;
-      const t = setTimeout(blink1, 800 + Math.random() * 400);
-      this.blinkTimeouts.push(t);
-    };
-
-    const blink2 = () => {
-      this.vaultBlink2.alpha = this.vaultBlink2.alpha === 1 ? 0.3 : 1;
-      const t = setTimeout(blink2, 400 + Math.random() * 600);
-      this.blinkTimeouts.push(t);
-    };
-
-    const blink3 = () => {
-      this.vaultBlink3.alpha = this.vaultBlink3.alpha === 1 ? 0.3 : 1;
-      const t = setTimeout(blink3, 600 + Math.random() * 555);
-      this.blinkTimeouts.push(t);
-    };
-    blink1();
-    blink2();
-    blink3();
-  }
-
-  private stopBlinking() {
-    this.blinkTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
-
-    this.vaultBlink1.alpha = 1;
-    this.vaultBlink2.alpha = 1;
-    this.vaultBlink3.alpha = 1;
-  }
-
   public checkCombination() {
     let isCorrect = true;
 
@@ -375,11 +219,11 @@ export default class Game extends Container {
     if (isCorrect) {
       this.openDoor();
       this.guessesText.visible = false;
-      this.startBlinking();
+      this.sceneManager.startBlinking();
 
       new Promise((resolve) => setTimeout(resolve, 5000)).then(() => {
         this.closeDoor();
-        this.stopBlinking();
+        this.sceneManager.stopBlinking();
         //   this.playResetDoorHandleSound();
 
         const targetRadians = 700 * (Math.PI / 180);
@@ -477,7 +321,11 @@ export default class Game extends Container {
     this.isDoorOpen = true;
     this.vaultDoor.texture = Texture.from("doorOpen");
 
-    const openPos = this.positionRelativeToBg(this.bgSprite, 0.845, 0.79);
+    const openPos = this.sceneManager.positionRelativeToBg(
+      this.bgSprite,
+      0.845,
+      0.79,
+    );
     this.vaultDoor.x = openPos.x;
     this.vaultDoor.y = openPos.y;
 
@@ -497,7 +345,11 @@ export default class Game extends Container {
     this.isDoorOpen = false;
     this.vaultDoor.texture = Texture.from("door");
 
-    const closedPos = this.positionRelativeToBg(this.bgSprite, 0.68, 0.79);
+    const closedPos = this.sceneManager.positionRelativeToBg(
+      this.bgSprite,
+      0.68,
+      0.79,
+    );
     this.vaultDoor.x = closedPos.x;
     this.vaultDoor.y = closedPos.y;
 
@@ -528,15 +380,15 @@ export default class Game extends Container {
 
       if (this.vaultDoor) {
         const doorPos = this.isDoorOpen
-          ? this.positionRelativeToBg(this.bgSprite, 0.845, 0.79)
-          : this.positionRelativeToBg(this.bgSprite, 0.68, 0.79);
+          ? this.sceneManager.positionRelativeToBg(this.bgSprite, 0.845, 0.79)
+          : this.sceneManager.positionRelativeToBg(this.bgSprite, 0.68, 0.79);
         this.vaultDoor.x = doorPos.x;
         this.vaultDoor.y = doorPos.y;
         this.vaultDoor.scale.set(doorScale);
       }
 
       if (this.doorShadow) {
-        const doorShadowPos = this.positionRelativeToBg(
+        const doorShadowPos = this.sceneManager.positionRelativeToBg(
           this.bgSprite,
           0.867,
           0.806,
@@ -547,7 +399,7 @@ export default class Game extends Container {
       }
 
       if (this.vaultHandle) {
-        const handlePos = this.positionRelativeToBg(
+        const handlePos = this.sceneManager.positionRelativeToBg(
           this.bgSprite,
           0.498,
           0.484,
@@ -558,7 +410,7 @@ export default class Game extends Container {
       }
 
       if (this.handleShadow) {
-        const handleShadowPos = this.positionRelativeToBg(
+        const handleShadowPos = this.sceneManager.positionRelativeToBg(
           this.bgSprite,
           0.5,
           0.493,
@@ -569,28 +421,40 @@ export default class Game extends Container {
       }
 
       if (this.vaultBlink1) {
-        const blinkPos1 = this.positionRelativeToBg(this.bgSprite, 0.41, 0.5);
+        const blinkPos1 = this.sceneManager.positionRelativeToBg(
+          this.bgSprite,
+          0.41,
+          0.5,
+        );
         this.vaultBlink1.x = blinkPos1.x;
         this.vaultBlink1.y = blinkPos1.y;
         this.vaultBlink1.scale.set(doorScale * 0.5);
       }
 
       if (this.vaultBlink2) {
-        const blinkPos2 = this.positionRelativeToBg(this.bgSprite, 0.52, 0.61);
+        const blinkPos2 = this.sceneManager.positionRelativeToBg(
+          this.bgSprite,
+          0.52,
+          0.61,
+        );
         this.vaultBlink2.x = blinkPos2.x;
         this.vaultBlink2.y = blinkPos2.y;
         this.vaultBlink2.scale.set(doorScale * 0.5);
       }
 
       if (this.vaultBlink3) {
-        const blinkPos3 = this.positionRelativeToBg(this.bgSprite, 0.48, 0.5);
+        const blinkPos3 = this.sceneManager.positionRelativeToBg(
+          this.bgSprite,
+          0.48,
+          0.5,
+        );
         this.vaultBlink3.x = blinkPos3.x;
         this.vaultBlink3.y = blinkPos3.y;
         this.vaultBlink3.scale.set(doorScale * 0.5);
       }
 
       if (this.arrowRight) {
-        const arrowRightPos = this.positionRelativeToBg(
+        const arrowRightPos = this.sceneManager.positionRelativeToBg(
           this.bgSprite,
           0.583,
           0.49,
@@ -601,7 +465,7 @@ export default class Game extends Container {
       }
 
       if (this.arrowLeft) {
-        const arrowLeftPos = this.positionRelativeToBg(
+        const arrowLeftPos = this.sceneManager.positionRelativeToBg(
           this.bgSprite,
           0.41,
           0.49,
@@ -613,18 +477,15 @@ export default class Game extends Container {
       }
 
       if (this.saveCurrentGuessContainer) {
-        const saveCurrentGuessContainerPos = this.positionRelativeToBg(
-          this.bgSprite,
-          0.304,
-          0.492,
-        );
+        const saveCurrentGuessContainerPos =
+          this.sceneManager.positionRelativeToBg(this.bgSprite, 0.304, 0.492);
         this.saveCurrentGuessContainer.x = saveCurrentGuessContainerPos.x;
         this.saveCurrentGuessContainer.y = saveCurrentGuessContainerPos.y;
         this.saveCurrentGuessContainer.scale.set(doorScale);
       }
 
       if (this.instructionsText) {
-        const instructionsPos = this.positionRelativeToBg(
+        const instructionsPos = this.sceneManager.positionRelativeToBg(
           this.bgSprite,
           0.15,
           0.5,
@@ -641,7 +502,11 @@ export default class Game extends Container {
       }
 
       if (this.guessesText) {
-        const guessesPos = this.positionRelativeToBg(this.bgSprite, 0.85, 0.5);
+        const guessesPos = this.sceneManager.positionRelativeToBg(
+          this.bgSprite,
+          0.85,
+          0.5,
+        );
         this.guessesText.x = guessesPos.x;
         this.guessesText.y = guessesPos.y;
 
