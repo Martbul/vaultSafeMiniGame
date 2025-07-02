@@ -3,7 +3,7 @@ import Game from "../Game";
 import { wait } from "../../../utils/misc";
 
 export default class GameLogicManager {
-  constructor(private game: Game) {}
+  constructor(private game: Game) { }
 
   public generateRandomCombination(): Pair[] {
     const pairs: Pair[] = [];
@@ -55,7 +55,7 @@ export default class GameLogicManager {
     this.game.currentHandleDeg = 0;
     this.game.currentHandleSecretNumber = 0;
     this.game.animateHandleRotation(0);
-    this.game.sceneManager.closeDoor();
+    this.game.sceneManager.closeDoorWrongGuess();
   }
 
   public checkCombination() {
@@ -64,9 +64,9 @@ export default class GameLogicManager {
     for (let i = 0; i < 3; i++) {
       if (
         this.game.currentGuesses[i].value !==
-          this.game.secretCombination[i].value ||
+        this.game.secretCombination[i].value ||
         this.game.currentGuesses[i].rotatingDirection !==
-          this.game.secretCombination[i].rotatingDirection
+        this.game.secretCombination[i].rotatingDirection
       ) {
         isCorrect = false;
         break;
@@ -83,16 +83,16 @@ export default class GameLogicManager {
         this.game.sceneManager.stopBlinking();
         //   this.playResetDoorHandleSound();
 
-        const targetRadians = 700 * (Math.PI / 180);
-        gsap.to([this.game.vaultHandle, this.game.handleShadow], {
-          rotation: targetRadians,
-          duration: 2.4,
-          ease: "back.out(1.2)",
-        });
-
         this.game.currentGuesses = [];
-
-        wait(1000).then(() => {
+        wait(2000).then(() => {
+          const targetRadians = 700 * (Math.PI / 180);
+          gsap.to([this.game.vaultHandle, this.game.handleShadow], {
+            rotation: targetRadians,
+            duration: 3.4,
+            ease: "back.out(1.2)",
+          });
+        });
+        wait(1300).then(() => {
           this.game.textUIManager.updateGuessesDisplay();
           this.game.guessesText.visible = true;
 

@@ -200,45 +200,45 @@ export default class SceneManager {
   }
 
   private openDoorAnimation() {
-    const originalAnchorX = this.game.vaultDoor.anchor.x;
-    const originalAnchorY = this.game.vaultDoor.anchor.y;
-
     const doorPos = this.game.sceneManager.positionRelativeToBg(
       this.bgSprite,
       0.68,
       0.79,
     );
 
-    this.game.vaultDoor.anchor.set(1, 0.5);
-
-    const doorWidth = this.game.vaultDoor.width;
-    this.game.vaultDoor.x = doorPos.x - doorWidth / 2;
+    this.game.vaultDoor.anchor.set(1, 1);
+    this.game.vaultDoor.x = doorPos.x;
     this.game.vaultDoor.y = doorPos.y;
 
     const tl = gsap.timeline();
 
-    tl.to(this.game.vaultDoor, {
-      duration: 2,
-      rotationY: 180,
-      transformOrigin: "100% 0%",
+    tl.to(this.game.vaultDoor.scale, {
+      duration: 1.5,
+      x: 0,
+      ease: "power2.inOut",
     })
-      .call(
-        () => {
-          this.game.vaultDoor.texture = Texture.from("doorOpen");
-        },
-        [],
-        1.8,
-      )
-      .call(
-        () => {
-          console.log("Door opened, anchor at left edge (hinges), rotation:");
-        },
-        [],
-        2,
-      );
+      .call(() => {
+        const doorPos = this.game.sceneManager.positionRelativeToBg(
+          this.bgSprite,
+          0.843,
+          0.8,
+        );
+        this.game.vaultDoor.x = doorPos.x;
+        this.game.vaultDoor.y = doorPos.y;
+
+        this.game.vaultDoor.texture = Texture.from("doorOpen");
+        this.game.vaultDoor.scale.x = this.doorScale;
+        this.game.vaultDoor.anchor.set(1, 1);
+      })
+      .to(this.game.vaultDoor, {
+        duration: 0.3,
+        alpha: 1,
+        ease: "power2.out",
+      });
 
     return tl;
   }
+
   public openDoor() {
     gsap.killTweensOf(this.game.vaultDoor);
 
@@ -281,56 +281,30 @@ export default class SceneManager {
     );
   }
 
-  private closeDoorAnimation() {
-    const startPos = this.game.sceneManager.positionRelativeToBg(
-      this.bgSprite,
-      0.845,
-      0.79,
-    );
-    const endPos = this.game.sceneManager.positionRelativeToBg(
-      this.bgSprite,
-      0.68,
-      0.79,
-    );
+  public closeDoor() {
+    gsap.killTweensOf(this.game.vaultDoor);
 
-    const tl = gsap.timeline();
+    const doorCloseAnimation = this.closeDoorAnimation();
 
-    tl.fromTo(
-      this.game.vaultDoor,
-      {
-        x: startPos.x,
-        y: startPos.y,
-        scaleX: 1.1,
-        skewX: -0.1,
-        alpha: 1,
+    this.game.isDoorOpen = false;
+
+    doorCloseAnimation.call(
+      () => {
+        this.game.doorShadow.visible = false;
+        this.game.handleShadow.visible = true;
+        this.game.vaultHandle.visible = true;
+        this.game.vaultBlink1.visible = false;
+        this.game.vaultBlink2.visible = false;
+        this.game.vaultBlink3.visible = false;
+        this.game.arrowRight.visible = true;
+        this.game.arrowLeft.visible = true;
       },
-      {
-        duration: 1.2,
-        x: endPos.x,
-        y: endPos.y,
-        scaleX: 1,
-        skewX: 0,
-        alpha: 0.8,
-        ease: "power2.inOut",
-      },
-    )
-      .to(this.game.vaultDoor, {
-        duration: 0.3,
-        alpha: 1,
-        ease: "power1.out",
-      })
-      .call(
-        () => {
-          this.game.vaultDoor.texture = Texture.from("door");
-        },
-        [],
-        0.9,
-      );
-
-    return tl;
+      [],
+      0.4,
+    );
   }
 
-  public closeDoor() {
+  public closeDoorWrongGuess() {
     this.game.isDoorOpen = false;
     this.game.vaultDoor.texture = Texture.from("door");
 
@@ -350,6 +324,40 @@ export default class SceneManager {
     this.game.vaultBlink3.visible = false;
     this.game.arrowRight.visible = true;
     this.game.arrowLeft.visible = true;
+  }
+
+  private closeDoorAnimation() {
+    const doorPos = this.game.sceneManager.positionRelativeToBg(
+      this.bgSprite,
+      0.68,
+      0.79,
+    );
+
+    this.game.vaultDoor.texture = Texture.from("doorOpen");
+    this.game.vaultDoor.anchor.set(1, 1);
+    this.game.vaultDoor.x = doorPos.x;
+    this.game.vaultDoor.y = doorPos.y;
+    this.game.vaultDoor.scale.set(this.doorScale);
+
+    const tl = gsap.timeline();
+
+    tl.to(this.game.vaultDoor, {
+      alpha: 0,
+      duration: 0.0,
+    })
+      .call(() => {
+        this.game.vaultDoor.texture = Texture.from("door");
+        this.game.vaultDoor.scale.x = 0;
+        this.game.vaultDoor.scale.y = this.doorScale;
+        this.game.vaultDoor.alpha = 1;
+      })
+      .to(this.game.vaultDoor.scale, {
+        duration: 1.5,
+        x: this.doorScale,
+        ease: "power2.inOut",
+      });
+
+    return tl;
   }
 
   private createRotationArrow(
