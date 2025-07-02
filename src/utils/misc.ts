@@ -13,8 +13,8 @@ export function centerObjects(...toCenter: DisplayObject[]) {
   toCenter.forEach(center);
 }
 
-export function wait(seconds: number) {
-  return new Promise<void>((res) => setTimeout(res, seconds * 1000));
+export function wait(miliSeconds: number) {
+  return new Promise<void>((res) => setTimeout(res, miliSeconds));
 }
 
 export async function after(

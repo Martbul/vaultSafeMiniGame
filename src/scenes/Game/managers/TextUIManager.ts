@@ -2,7 +2,7 @@ import { Text, TextStyle } from "pixi.js";
 import Game from "../Game";
 
 export default class TextUIManager {
-  constructor(private game: Game) { }
+  constructor(private game: Game) {}
 
   public setupTextDisplays() {
     const instructionsTextStyle = new TextStyle({

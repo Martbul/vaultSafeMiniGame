@@ -1,5 +1,6 @@
 import gsap from "gsap";
 import Game from "../Game";
+import { wait } from "../../../utils/misc";
 
 export default class GameLogicManager {
   constructor(private game: Game) { }
@@ -77,7 +78,7 @@ export default class GameLogicManager {
       this.game.guessesText.visible = false;
       this.game.sceneManager.startBlinking();
 
-      new Promise((resolve) => setTimeout(resolve, 5000)).then(() => {
+      wait(5000).then(() => {
         this.game.sceneManager.closeDoor();
         this.game.sceneManager.stopBlinking();
         //   this.playResetDoorHandleSound();
@@ -97,7 +98,7 @@ export default class GameLogicManager {
 
         this.game.currentGuesses = [];
 
-        new Promise((resolve) => setTimeout(resolve, 1000)).then(() => {
+        wait(1000).then(() => {
           this.game.textUIManager.updateGuessesDisplay();
           this.game.guessesText.visible = true;
 
@@ -119,10 +120,10 @@ export default class GameLogicManager {
         this.game.gameLogicManager.generateRandomCombination();
       this.game.secretCombination = randomCombination;
       randomCombination.forEach((p: Pair) => console.log(p));
-      setTimeout(() => {
+      wait(2000).then(() => {
         this.game.guessesText.style.fill = "#ffffff";
         this.game.textUIManager.updateGuessesDisplay();
-      }, 2000);
+      });
     }
   }
 }

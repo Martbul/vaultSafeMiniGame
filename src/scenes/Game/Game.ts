@@ -15,8 +15,7 @@ export default class Game extends Container {
   public sceneManager: SceneManager;
   public textUIManager: TextUIManager;
 
-  public uiContainer = new Container();
-
+  public uiContainer!: Container;
   public background!: Container;
   public saveCurrentGuessContainer!: Container;
   public bgSprite!: Sprite;
@@ -36,7 +35,8 @@ export default class Game extends Container {
   public currentHandleSecretNumber = 0;
   public currentGuesses: Pair[] = [];
   public secretCombination!: Pair[];
-  public blinkTimeouts: number[] = [];
+  public blinkTimeouts: Promise<void>[] = [];
+  public areBlinking = false;
 
   constructor(protected utils: SceneUtils) {
     super();
@@ -86,6 +86,7 @@ export default class Game extends Container {
   }
 
   private setupVaultBackground() {
+    this.uiContainer = new Container();
     this.background = new Container();
     this.saveCurrentGuessContainer = new Container();
 

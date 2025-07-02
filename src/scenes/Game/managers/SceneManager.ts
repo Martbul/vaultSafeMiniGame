@@ -1,12 +1,13 @@
 import { Rectangle, Sprite, Texture } from "pixi.js";
 import Game from "../Game";
 import gsap from "gsap";
+import { wait } from "../../../utils/misc";
 
 export default class SceneManager {
   private bgSprite!: Sprite;
   private doorScale!: number;
 
-  constructor(private game: Game) {}
+  constructor(private game: Game) { }
 
   public positionRelativeToBg(
     bg: Sprite,
@@ -170,31 +171,28 @@ export default class SceneManager {
       this.game.animateHandleRotation(this.game.currentHandleDeg);
     });
   }
+
   public startBlinking() {
-    const blink1 = () => {
-      this.game.vaultBlink1.alpha = this.game.vaultBlink1.alpha === 1 ? 0.3 : 1;
-      const t = setTimeout(blink1, 800 + Math.random() * 400);
-      this.game.blinkTimeouts.push(t);
+    this.game.areBlinking = true;
+    const blink = async (sprite: Sprite, min: number, max: number) => {
+      while (this.game.areBlinking) {
+        if (sprite.alpha === 1) {
+          sprite.alpha = 0.3;
+        } else {
+          sprite.alpha = 1;
+        }
+        await wait(min + Math.random() * max);
+      }
+      sprite.alpha = 1;
     };
 
-    const blink2 = () => {
-      this.game.vaultBlink2.alpha = this.game.vaultBlink2.alpha === 1 ? 0.3 : 1;
-      const t = setTimeout(blink2, 400 + Math.random() * 600);
-      this.game.blinkTimeouts.push(t);
-    };
-
-    const blink3 = () => {
-      this.game.vaultBlink3.alpha = this.game.vaultBlink3.alpha === 1 ? 0.3 : 1;
-      const t = setTimeout(blink3, 600 + Math.random() * 555);
-      this.game.blinkTimeouts.push(t);
-    };
-    blink1();
-    blink2();
-    blink3();
+    blink(this.game.vaultBlink1, 600, 400);
+    blink(this.game.vaultBlink2, 500, 300);
+    blink(this.game.vaultBlink3, 600, 500);
   }
 
   public stopBlinking() {
-    this.game.blinkTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+    this.game.areBlinking = false;
 
     this.game.vaultBlink1.alpha = 1;
     this.game.vaultBlink2.alpha = 1;
