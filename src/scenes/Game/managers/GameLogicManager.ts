@@ -3,7 +3,7 @@ import Game from "../Game";
 import { wait } from "../../../utils/misc";
 
 export default class GameLogicManager {
-  constructor(private game: Game) { }
+  constructor(private game: Game) {}
 
   public generateRandomCombination(): Pair[] {
     const pairs: Pair[] = [];
@@ -64,9 +64,9 @@ export default class GameLogicManager {
     for (let i = 0; i < 3; i++) {
       if (
         this.game.currentGuesses[i].value !==
-        this.game.secretCombination[i].value ||
+          this.game.secretCombination[i].value ||
         this.game.currentGuesses[i].rotatingDirection !==
-        this.game.secretCombination[i].rotatingDirection
+          this.game.secretCombination[i].rotatingDirection
       ) {
         isCorrect = false;
         break;
@@ -84,13 +84,7 @@ export default class GameLogicManager {
         //   this.playResetDoorHandleSound();
 
         const targetRadians = 700 * (Math.PI / 180);
-        gsap.to(this.game.vaultHandle, {
-          rotation: targetRadians,
-          duration: 2.4,
-          ease: "back.out(1.2)",
-        });
-
-        gsap.to(this.game.handleShadow, {
+        gsap.to([this.game.vaultHandle, this.game.handleShadow], {
           rotation: targetRadians,
           duration: 2.4,
           ease: "back.out(1.2)",

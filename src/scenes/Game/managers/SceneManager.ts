@@ -199,38 +199,135 @@ export default class SceneManager {
     this.game.vaultBlink3.alpha = 1;
   }
 
-  //TODO: Fix it,this does not work
   private openDoorAnimation() {
-    gsap.to(this.game.vaultDoor, {
+    const originalAnchorX = this.game.vaultDoor.anchor.x;
+    const originalAnchorY = this.game.vaultDoor.anchor.y;
+
+    const doorPos = this.game.sceneManager.positionRelativeToBg(
+      this.bgSprite,
+      0.68,
+      0.79,
+    );
+
+    this.game.vaultDoor.anchor.set(1, 0.5);
+
+    const doorWidth = this.game.vaultDoor.width;
+    this.game.vaultDoor.x = doorPos.x - doorWidth / 2;
+    this.game.vaultDoor.y = doorPos.y;
+
+    const tl = gsap.timeline();
+
+    tl.to(this.game.vaultDoor, {
       duration: 2,
-      rotateY: -Math.PI / 2,
-      ease: "power2.inOut",
-    });
+      rotationY: 180,
+      transformOrigin: "100% 0%",
+    })
+      .call(
+        () => {
+          this.game.vaultDoor.texture = Texture.from("doorOpen");
+        },
+        [],
+        1.8,
+      )
+      .call(
+        () => {
+          console.log("Door opened, anchor at left edge (hinges), rotation:");
+        },
+        [],
+        2,
+      );
+
+    return tl;
+  }
+  public openDoor() {
+    gsap.killTweensOf(this.game.vaultDoor);
+
+    const doorAnimation = this.openDoorAnimation();
+
+    this.game.isDoorOpen = true;
+
+    doorAnimation.call(
+      () => {
+        this.game.doorShadow.visible = true;
+        this.game.handleShadow.visible = false;
+        this.game.vaultHandle.visible = false;
+        this.game.arrowLeft.visible = false;
+        this.game.arrowRight.visible = false;
+        this.game.soundManager.playDoorOpenSound();
+      },
+      [],
+      0.2,
+    );
+
+    doorAnimation.call(
+      () => {
+        this.game.vaultBlink1.visible = true;
+        this.game.vaultBlink2.visible = true;
+        this.game.vaultBlink3.visible = true;
+
+        gsap.fromTo(
+          [this.game.vaultBlink1, this.game.vaultBlink2, this.game.vaultBlink3],
+          { alpha: 0 },
+          {
+            duration: 0.6,
+            alpha: 1,
+            ease: "power2.out",
+            stagger: 0.15,
+          },
+        );
+      },
+      [],
+      1.5,
+    );
   }
 
-  public openDoor() {
-    this.openDoorAnimation();
-    this.game.isDoorOpen = true;
-    this.game.vaultDoor.texture = Texture.from("doorOpen");
-
-    const openPos = this.game.sceneManager.positionRelativeToBg(
+  private closeDoorAnimation() {
+    const startPos = this.game.sceneManager.positionRelativeToBg(
       this.bgSprite,
       0.845,
       0.79,
     );
-    this.game.vaultDoor.x = openPos.x;
-    this.game.vaultDoor.y = openPos.y;
+    const endPos = this.game.sceneManager.positionRelativeToBg(
+      this.bgSprite,
+      0.68,
+      0.79,
+    );
 
-    this.game.doorShadow.visible = true;
-    this.game.handleShadow.visible = false;
-    this.game.vaultHandle.visible = false;
-    this.game.vaultBlink1.visible = true;
-    this.game.vaultBlink2.visible = true;
-    this.game.vaultBlink3.visible = true;
-    this.game.arrowLeft.visible = false;
-    this.game.arrowRight.visible = false;
+    const tl = gsap.timeline();
 
-    this.game.soundManager.playDoorOpenSound();
+    tl.fromTo(
+      this.game.vaultDoor,
+      {
+        x: startPos.x,
+        y: startPos.y,
+        scaleX: 1.1,
+        skewX: -0.1,
+        alpha: 1,
+      },
+      {
+        duration: 1.2,
+        x: endPos.x,
+        y: endPos.y,
+        scaleX: 1,
+        skewX: 0,
+        alpha: 0.8,
+        ease: "power2.inOut",
+      },
+    )
+      .to(this.game.vaultDoor, {
+        duration: 0.3,
+        alpha: 1,
+        ease: "power1.out",
+      })
+      .call(
+        () => {
+          this.game.vaultDoor.texture = Texture.from("door");
+        },
+        [],
+        0.9,
+      );
+
+    return tl;
   }
 
   public closeDoor() {

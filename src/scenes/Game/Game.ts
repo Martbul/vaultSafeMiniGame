@@ -139,14 +139,7 @@ export default class Game extends Container {
 
   public animateHandleRotation(targetDegrees: number) {
     const targetRadians = targetDegrees * (Math.PI / 180);
-
-    gsap.to(this.vaultHandle, {
-      rotation: targetRadians,
-      duration: 0.5,
-      ease: "back.out(1.2)",
-    });
-
-    gsap.to(this.handleShadow, {
+    gsap.to([this.vaultHandle, this.handleShadow], {
       rotation: targetRadians,
       duration: 0.5,
       ease: "back.out(1.2)",
