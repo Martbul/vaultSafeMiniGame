@@ -248,7 +248,6 @@ export default class SceneManager {
 
     doorAnimation.call(
       () => {
-        this.game.doorShadow.visible = true;
         this.game.handleShadow.visible = false;
         this.game.vaultHandle.visible = false;
         this.game.arrowLeft.visible = false;
@@ -265,6 +264,7 @@ export default class SceneManager {
         this.game.vaultBlink2.visible = true;
         this.game.vaultBlink3.visible = true;
 
+        this.game.doorShadow.visible = true;
         gsap.fromTo(
           [this.game.vaultBlink1, this.game.vaultBlink2, this.game.vaultBlink3],
           { alpha: 0 },
@@ -284,13 +284,13 @@ export default class SceneManager {
   public closeDoor() {
     gsap.killTweensOf(this.game.vaultDoor);
 
+    this.game.doorShadow.visible = false;
     const doorCloseAnimation = this.closeDoorAnimation();
 
     this.game.isDoorOpen = false;
 
     doorCloseAnimation.call(
       () => {
-        this.game.doorShadow.visible = false;
         this.game.handleShadow.visible = true;
         this.game.vaultHandle.visible = true;
         this.game.vaultBlink1.visible = false;
