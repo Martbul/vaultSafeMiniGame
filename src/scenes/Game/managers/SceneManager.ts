@@ -160,7 +160,7 @@ export default class SceneManager {
 
       this.game.soundManager.playHandleRotatingSound();
 
-      this.game.animateHandleRotation(this.game.currentHandleDeg);
+      this.animateHandleRotation(this.game.currentHandleDeg);
     });
 
     this.game.arrowLeft.on("pointerdown", () => {
@@ -168,7 +168,25 @@ export default class SceneManager {
       this.game.currentHandleSecretNumber -= 1;
 
       this.game.soundManager.playHandleRotatingSound();
-      this.game.animateHandleRotation(this.game.currentHandleDeg);
+      this.animateHandleRotation(this.game.currentHandleDeg);
+    });
+  }
+
+
+  public animateHandleRotation(targetDegrees: number) {
+    const targetRadians = targetDegrees * (Math.PI / 180);
+    gsap.to([this.game.vaultHandle, this.game.handleShadow], {
+      rotation: targetRadians,
+      duration: 0.5,
+      ease: "back.out(1.2)",
+    });
+  }
+  public animateHandleRotationCrazy(targetDegrees: number) {
+    const targetRadians = targetDegrees * (Math.PI / 180) * Math.random() * 4;
+    gsap.to([this.game.vaultHandle, this.game.handleShadow], {
+      rotation: targetRadians,
+      duration: 1.1,
+      ease: "back.out(1.2)",
     });
   }
 

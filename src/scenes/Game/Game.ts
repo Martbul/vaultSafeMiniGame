@@ -1,11 +1,9 @@
 import { Container, Text, Graphics, Sprite } from "pixi.js";
-import gsap from "gsap";
 import { SceneUtils } from "../../core/App";
 import SoundManager from "./managers/SoundManager";
 import { centerObjects } from "../../utils/misc";
 import GameLogicManager from "./managers/GameLogicManager";
 import SceneManager from "./managers/SceneManager";
-import TextUIManager from "./managers/TextUIManager";
 
 export default class Game extends Container {
   name = "Game";
@@ -13,7 +11,6 @@ export default class Game extends Container {
   public soundManager: SoundManager;
   public gameLogicManager: GameLogicManager;
   public sceneManager: SceneManager;
-  public textUIManager: TextUIManager;
 
   public uiContainer!: Container;
   public background!: Container;
@@ -25,7 +22,6 @@ export default class Game extends Container {
   public vaultBlink2!: Sprite;
   public vaultBlink3!: Sprite;
   public doorShadow!: Sprite;
-  public instructionsText!: Text;
   public guessesText!: Text;
   public handleShadow!: Sprite;
   public arrowRight!: Sprite;
@@ -33,7 +29,8 @@ export default class Game extends Container {
   public isDoorOpen = false;
   public currentHandleDeg = 0;
   public currentHandleSecretNumber = 0;
-  public currentGuesses: Pair[] = [];
+  public currentGuess!: Pair;
+  public guessesMade: number = 0;
   public secretCombination!: Pair[];
   public blinkTimeouts: Promise<void>[] = [];
   public areBlinking = false;
@@ -43,7 +40,6 @@ export default class Game extends Container {
     this.soundManager = new SoundManager();
     this.gameLogicManager = new GameLogicManager(this);
     this.sceneManager = new SceneManager(this);
-    this.textUIManager = new TextUIManager(this);
   }
 
   async load() {
@@ -74,12 +70,10 @@ export default class Game extends Container {
     this.removeChildren();
 
     this.setupVaultBackground();
-    this.textUIManager.setupTextDisplays();
 
     this.addChild(this.background);
 
     this.sceneManager.setupArrowInteraction();
-    this.textUIManager.updateGuessesDisplay();
 
     this.uiContainer.addChild(this.background);
     this.addChild(this.uiContainer);
@@ -99,7 +93,7 @@ export default class Game extends Container {
     this.sceneManager.setUpSaveCurrGuessContainer();
     this.saveCurrentGuessContainer.on("pointerdown", () => {
       this.soundManager.playClickingSound();
-      this.gameLogicManager.saveCurrentGuess();
+      this.gameLogicManager.checkCombination(this.guessesMade);
     });
 
     const doorShadow = this.sceneManager.getDoorShadow();
@@ -137,14 +131,6 @@ export default class Game extends Container {
     );
   }
 
-  public animateHandleRotation(targetDegrees: number) {
-    const targetRadians = targetDegrees * (Math.PI / 180);
-    gsap.to([this.vaultHandle, this.handleShadow], {
-      rotation: targetRadians,
-      duration: 0.5,
-      ease: "back.out(1.2)",
-    });
-  }
 
   public onResize(width: number, height: number) {
     const baseWidth = 1920;
